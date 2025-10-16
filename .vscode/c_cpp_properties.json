@@ -6,9 +6,7 @@
                 "${workspaceFolder}/include"
             ],
             "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE",
+                "HMBG_DEBUG",
                 "__FILE_NAME__"
             ],
             "compilerPath": "F:\\program files\\LLVM-MinGW-W64\\bin\\clang++.exe",

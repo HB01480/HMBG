@@ -1,8 +1,11 @@
 SHELL = pwsh.exe
 
+# Modifiable variables
+DEBUG = 1
+
 CC := clang++
 CF := -O1 -m64 -std=c++17 -Wall
-DEFINES :=
+DEFINES := -DHMBG_DEBUG=$(DEBUG)
 CF += $(DEFINES)
 
 SRC_DIR := src
