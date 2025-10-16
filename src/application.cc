@@ -4,14 +4,7 @@
 Application::Application(SDL_AppResult *appResult, int argc, char *argv[])
 : window(nullptr), gpuDevice(nullptr)
 {
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        *appResult = SDL_APP_FAILURE;
-        return;
-    }
-    if (!TTF_Init()) {
-        *appResult = SDL_APP_FAILURE;
-        return;
-    }
+    *appResult = initLibraries();
 
     this->window = SDL_CreateWindow("Highly Moddable Block Game", 1024, 512, 0);
     if (!this->window) {
@@ -43,8 +36,7 @@ Application::~Application() {
     if (this->gpuDevice) SDL_DestroyGPUDevice(this->gpuDevice);
     if (this->window) SDL_DestroyWindow(this->window);
 
-    TTF_Quit();
-    SDL_Quit();
+    quitLibraries();
 }
 
 SDL_AppResult Application::onUpdate() {
@@ -69,7 +61,6 @@ SDL_AppResult Application::onRender() {
         SDL_SubmitGPUCommandBuffer(commandBuffer);
         return SDL_APP_CONTINUE;
     }
-
 
     SDL_GPUColorTargetInfo colorTargetInfo = {0};
     colorTargetInfo.clear_color = {32.0f/255.0f, 32.0f/255.0f, 64.0f/255.0f, 255.0f/255.0f};
@@ -99,4 +90,20 @@ SDL_AppResult Application::onEvent(SDL_Event &event) {
     }
 
     return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult Application::initLibraries() {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+        return SDL_APP_FAILURE;
+    }
+    if (!TTF_Init()) {
+        return SDL_APP_FAILURE;
+    }
+
+    return SDL_APP_CONTINUE;
+}
+
+void Application::quitLibraries() {
+    TTF_Quit();
+    SDL_Quit();
 }

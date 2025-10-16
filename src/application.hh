@@ -12,6 +12,10 @@ public:
     SDL_AppResult onEvent(SDL_Event &event);
 
 private:
+    SDL_AppResult initLibraries();
+
+    void quitLibraries();
+
     SDL_Window *window;
     SDL_GPUDevice *gpuDevice;
 
