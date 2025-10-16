@@ -13,5 +13,6 @@ public:
 
 private:
     SDL_Window *window;
+    SDL_GPUDevice *gpuDevice;
 
 };
