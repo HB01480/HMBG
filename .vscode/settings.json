@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.h": "c",
+        "*.json": "json",
+        "ios": "c",
+        "variant": "cpp"
+    }
+}
