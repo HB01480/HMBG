@@ -3,8 +3,6 @@
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
-#include <vector>
-
 
 typedef unsigned char u8;
 typedef unsigned short u16;
