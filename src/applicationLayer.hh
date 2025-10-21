@@ -4,6 +4,7 @@
 
 class ApplicationLayer {
 public:
+    ApplicationLayer(const char *name) : name(name) {}
     ~ApplicationLayer() = default;
 
     virtual void onEnter() = 0;
@@ -13,7 +14,9 @@ public:
     virtual void render(SDL_Renderer *renderer) = 0;
     virtual void processEvent(SDL_Event *event) = 0;
 
-private:
+    const char *getName() { return name; }
 
+private:
+    const char *name;
 
 };
