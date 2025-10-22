@@ -3,15 +3,11 @@
 
 ApplicationLayer::ApplicationLayer(const char *name) {
     if (!name) {
-        const char defaultLayerName[] = "NULL/DEFAULT-LAYER-NAME";
-
-        this->name = new char[sizeof(defaultLayerName)];
+        this->name = SDL_strdup("NULL/DEFAULT-LAYER-NAME");
         SDL_assert_release(this->name);
-        SDL_assert_release(SDL_strlcpy(this->name, defaultLayerName, sizeof(defaultLayerName)) == sizeof(defaultLayerName));
     }
 
-    usize bytesToAllocate = SDL_strlen(name) + 1;
-    this->name = new char[bytesToAllocate];
+    this->name = SDL_strdup(name);
     SDL_assert_release(this->name);
 }
 
