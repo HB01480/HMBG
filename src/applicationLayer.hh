@@ -5,7 +5,7 @@
 class ApplicationLayer {
 public:
     ApplicationLayer(const char *name) : name(name) {}
-    ~ApplicationLayer() = default;
+    virtual ~ApplicationLayer() = default;
 
     virtual void onEnter() = 0;
     virtual void onExit() = 0;
