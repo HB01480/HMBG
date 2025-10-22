@@ -4,8 +4,9 @@
 
 class ApplicationLayer {
 public:
-    ApplicationLayer(const char *name) : name(name) {}
-    virtual ~ApplicationLayer() = default;
+    // @param name It should be null-terminated
+    ApplicationLayer(const char *name);
+    virtual ~ApplicationLayer();
 
     virtual void onEnter() = 0;
     virtual void onExit() = 0;
@@ -17,6 +18,6 @@ public:
     const char *getName() { return name; }
 
 private:
-    const char *name;
+    char *name;
 
 };
