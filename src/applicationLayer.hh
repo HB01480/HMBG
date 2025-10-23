@@ -19,7 +19,7 @@ public:
     const char *getName() { return name; }
     ApplicationLayerStatus getStatus() { return status; }
     void setStatus(ApplicationLayerStatus status) { this->status = status; }
-    
+
 
 private:
     char *name;
