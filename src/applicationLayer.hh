@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hh"
+#include "applicationLayerStatus.hh"
 
 
 class ApplicationLayer {
@@ -16,8 +17,12 @@ public:
     virtual void processEvent(SDL_Event *event) = 0;
 
     const char *getName() { return name; }
+    ApplicationLayerStatus getStatus() { return status; }
+    void setStatus(ApplicationLayerStatus status) { this->status = status; }
+    
 
 private:
     char *name;
+    ApplicationLayerStatus status;
 
 };
