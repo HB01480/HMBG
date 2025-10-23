@@ -1,7 +1,9 @@
 #include "applicationLayer.hh"
 
 
-ApplicationLayer::ApplicationLayer(const char *name) {
+ApplicationLayer::ApplicationLayer(const char *name)
+: name(nullptr), status(ApplicationLayerStatus::Active)
+{
     if (!name) {
         this->name = SDL_strdup("NULL/DEFAULT-LAYER-NAME");
         SDL_assert_release(this->name);
