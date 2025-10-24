@@ -30,6 +30,6 @@ SDL_AppResult SDLCALL SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDLCALL SDL_AppQuit(void *appstate, SDL_AppResult result) {
-    // Application *app = (Application *)appstate;
-    // app's destructor should be called around here
+    Application *app = (Application *)appstate;
+    delete app;
 }
