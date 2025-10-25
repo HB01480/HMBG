@@ -2,7 +2,7 @@
 
 
 Application::Application(SDL_AppResult *appResult, int argc, char *argv[])
-: window(nullptr), gpuDevice(nullptr)
+: window(nullptr), gpuDevice(nullptr), clock()
 {
     *appResult = initLibraries();
 
@@ -40,10 +40,15 @@ Application::~Application() {
 }
 
 SDL_AppResult Application::onUpdate() {
-    return SDL_APP_CONTINUE;
+    SDL_AppResult appResult = SDL_APP_CONTINUE;
+
+
+    clock.tick();
+    return appResult;
 }
 
 SDL_AppResult Application::onRender() {
+    SDL_AppResult appResult = SDL_APP_CONTINUE;
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(gpuDevice);
 
     SDL_GPUTexture *windowTexture;
@@ -75,21 +80,23 @@ SDL_AppResult Application::onRender() {
     SDL_EndGPURenderPass(renderPass);
 
     SDL_SubmitGPUCommandBuffer(commandBuffer);
-    return SDL_APP_CONTINUE;
+    return appResult;
 }
 
 SDL_AppResult Application::onEvent(SDL_Event &event) {
+    SDL_AppResult appResult = SDL_APP_CONTINUE;
+
     if (event.type == SDL_EVENT_QUIT) {
-        return SDL_APP_SUCCESS;
+        appResult = SDL_APP_SUCCESS;
     }
 
     if (event.type == SDL_EVENT_KEY_DOWN) {
         if (event.key.key == SDLK_ESCAPE) {
-            return SDL_APP_SUCCESS;
+            appResult = SDL_APP_SUCCESS;
         }
     }
 
-    return SDL_APP_CONTINUE;
+    return appResult;
 }
 
 SDL_AppResult Application::initLibraries() {
