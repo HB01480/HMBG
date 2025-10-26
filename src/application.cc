@@ -2,7 +2,9 @@
 
 
 Application::Application(SDL_AppResult *appResult, int argc, char *argv[])
-: window(nullptr), gpuDevice(nullptr), clock()
+: window(nullptr), gpuDevice(nullptr), clock(),
+  gameAS(nullptr), titleMenuAS(nullptr),
+  currentAS(nullptr), nextAS(nullptr)
 {
     *appResult = initLibraries();
 
@@ -29,19 +31,47 @@ Application::Application(SDL_AppResult *appResult, int argc, char *argv[])
         return;
     }
 
+    gameAS = new Game_AppState(appResult);
+    titleMenuAS = new TitleMenu_AppState(appResult);
+
+    currentAS = titleMenuAS;
+    currentAS->enter();
+
     *appResult = SDL_APP_CONTINUE;
 }
 
 Application::~Application() {
+    currentAS->exit();
+
+    delete titleMenuAS;
+    delete gameAS;
+
     if (this->gpuDevice) SDL_DestroyGPUDevice(this->gpuDevice);
     if (this->window) SDL_DestroyWindow(this->window);
 
     quitLibraries();
 }
 
+SDL_AppResult Application::onIterate() {
+    SDL_AppResult appResult = SDL_APP_CONTINUE;
+    appResult = onUpdate();
+    appResult = onRender();
+
+    clock.tick();
+    return appResult;
+}
+
 SDL_AppResult Application::onUpdate() {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
+    currentAS->onUpdate(clock.dt);
+    if (nextAS != nullptr) {
+        currentAS->exit();
+        nextAS->enter();
+
+        currentAS = nextAS;
+        nextAS = nullptr;
+    }
 
     clock.tick();
     return appResult;
@@ -73,6 +103,8 @@ SDL_AppResult Application::onRender() {
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.texture = windowTexture;
 
+    currentAS->onRender(commandBuffer);
+
     SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, NULL);
 
 
@@ -94,9 +126,58 @@ SDL_AppResult Application::onEvent(SDL_Event &event) {
         if (event.key.key == SDLK_ESCAPE) {
             appResult = SDL_APP_SUCCESS;
         }
+
+    }
+
+    currentAS->onEvent(event);
+
+    if (event.type == SDL_EVENT_KEY_DOWN) {
+        if (event.key.key == SDLK_Z) {
+            nextAS = titleMenuAS;
+        }
+        if (event.key.key == SDLK_X) {
+            nextAS = gameAS;
+        }
+    }
+
+    if (event.type == getAppStateEventType()) {
+        if (event.user.code == APP_STATE_EVENT_CODE_CHANGE_TO) {
+            AppStateID id = receiveASEventChangeTo(event);
+
+            if (id == AppStateID::TitleMenu) nextAS = titleMenuAS;
+            else if (id == AppStateID::Game) nextAS = gameAS;
+        }
     }
 
     return appResult;
+}
+
+u32 Application::getAppStateEventType() {
+    static SDL_AtomicU32 eventType; SDL_zero(eventType);
+
+    SDL_CompareAndSwapAtomicU32(&eventType, 0, SDL_RegisterEvents(1));
+    SDL_assert(SDL_GetAtomicU32(&eventType) != 0);
+
+    return SDL_GetAtomicU32(&eventType);
+}
+
+void Application::sendASEventChangeTo(AppStateID id) {
+    SDL_Event event; SDL_zero(event);
+    event.user.type = getAppStateEventType();
+    event.user.code = APP_STATE_EVENT_CODE_CHANGE_TO;
+    event.user.data1 = new AppStateID(id);
+    event.user.data2 = nullptr;
+
+    SDL_PushEvent(&event);
+}
+
+AppStateID Application::receiveASEventChangeTo(SDL_Event &event) {
+    SDL_assert(event.user.type == getAppStateEventType() && event.user.code == APP_STATE_EVENT_CODE_CHANGE_TO);
+
+    AppStateID id = *(AppStateID *)event.user.data1;
+
+    delete (AppStateID *)event.user.data1;
+    return id;
 }
 
 SDL_AppResult Application::initLibraries() {

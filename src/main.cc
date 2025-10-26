@@ -17,8 +17,7 @@ SDL_AppResult SDLCALL SDL_AppIterate(void *appstate) {
     Application *app = (Application *)appstate;
 
     SDL_AppResult appResult = SDL_APP_CONTINUE;
-    appResult = app->onUpdate();
-    appResult = app->onRender();
+    appResult = app->onIterate();
 
     return appResult;
 }
