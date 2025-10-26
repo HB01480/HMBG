@@ -97,19 +97,17 @@ SDL_AppResult Application::onRender() {
         return SDL_APP_CONTINUE;
     }
 
-    SDL_GPUColorTargetInfo colorTargetInfo = {0};
-    colorTargetInfo.clear_color = {32.0f/255.0f, 32.0f/255.0f, 64.0f/255.0f, 255.0f/255.0f};
-    colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-    colorTargetInfo.texture = windowTexture;
+    SDL_GPUColorTargetInfo colorTargetInfo = {
+        .clear_color = {32.0f/255.0f, 32.0f/255.0f, 64.0f/255.0f, 255.0f/255.0f},
+        .load_op = SDL_GPU_LOADOP_CLEAR,
+        .store_op = SDL_GPU_STOREOP_STORE,
+        .texture = windowTexture
+    };
+
+    SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, nullptr);
+    SDL_EndGPURenderPass(renderPass);
 
     currentAS->onRender(commandBuffer);
-
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, NULL);
-
-
-
-    SDL_EndGPURenderPass(renderPass);
 
     SDL_SubmitGPUCommandBuffer(commandBuffer);
     return appResult;
