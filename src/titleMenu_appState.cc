@@ -1,7 +1,9 @@
 #include "titleMenu_appState.hh"
 
 
-TitleMenu_AppState::TitleMenu_AppState(SDL_AppResult *appResult) {
+TitleMenu_AppState::TitleMenu_AppState(SDL_AppResult *appResult)
+: AppState()
+{
     
 }
 

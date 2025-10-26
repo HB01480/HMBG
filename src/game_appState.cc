@@ -1,7 +1,9 @@
 #include "game_appState.hh"
 
 
-Game_AppState::Game_AppState(SDL_AppResult *appResult) {
+Game_AppState::Game_AppState(SDL_AppResult *appResult)
+: AppState()
+{
 
 }
 
