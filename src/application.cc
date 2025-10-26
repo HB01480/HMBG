@@ -2,7 +2,7 @@
 
 
 Application::Application(SDL_AppResult *appResult, int argc, char *argv[])
-: window(nullptr), gpuDevice(nullptr), clock(),
+: window(nullptr), gpu(nullptr), clock(),
   gameAS(nullptr), titleMenuAS(nullptr),
   currentAS(nullptr), nextAS(nullptr)
 {
@@ -16,15 +16,15 @@ Application::Application(SDL_AppResult *appResult, int argc, char *argv[])
         return;
     }
 
-    this->gpuDevice = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, HMBG_DEBUG, NULL);
-    if (!this->gpuDevice) {
+    this->gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, HMBG_DEBUG, NULL);
+    if (!this->gpu) {
         SDL_Log("Failed to create GPU Device");
 
         *appResult = SDL_APP_FAILURE;
         return;
     }
 
-    if (!SDL_ClaimWindowForGPUDevice(this->gpuDevice, this->window)) {
+    if (!SDL_ClaimWindowForGPUDevice(this->gpu, this->window)) {
         SDL_Log("Failed to claim window for the GPU Device");
 
         *appResult = SDL_APP_FAILURE;
@@ -46,7 +46,7 @@ Application::~Application() {
     delete titleMenuAS;
     delete gameAS;
 
-    if (this->gpuDevice) SDL_DestroyGPUDevice(this->gpuDevice);
+    if (this->gpu) SDL_DestroyGPUDevice(this->gpu);
     if (this->window) SDL_DestroyWindow(this->window);
 
     quitLibraries();
@@ -79,7 +79,7 @@ SDL_AppResult Application::onUpdate() {
 
 SDL_AppResult Application::onRender() {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
-    SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(gpuDevice);
+    SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(gpu);
 
     SDL_GPUTexture *windowTexture;
     u32 windowTextureWidth, windowTextureHeight;

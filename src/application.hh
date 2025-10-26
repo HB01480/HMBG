@@ -31,7 +31,7 @@ private:
     void quitLibraries();
 
     SDL_Window *window;
-    SDL_GPUDevice *gpuDevice;
+    SDL_GPUDevice *gpu;
     Clock clock;
 
     Game_AppState *gameAS;
@@ -39,5 +39,13 @@ private:
 
     AppState *currentAS;
     AppState *nextAS;
+
+    SDL_GPUShader *vertexShader;
+    SDL_GPUShader *fragmentShader;
+
+    SDL_GPUBuffer *vertexBuffer;
+    SDL_GPUTransferBuffer *transferBuffer;
+
+    SDL_GPUGraphicsPipeline *graphicsPipeline;
 
 };
