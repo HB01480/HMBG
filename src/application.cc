@@ -16,7 +16,7 @@ Application::Application(SDL_AppResult *appResult, int argc, char *argv[])
         return;
     }
 
-    this->gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, HMBG_DEBUG, NULL);
+    this->gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, NULL);
     if (!this->gpu) {
         SDL_Log("Failed to create GPU Device");
 
