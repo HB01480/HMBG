@@ -9,7 +9,7 @@ OBJ_DIR := $(OUT_DIR)/obj
 
 INC := -Iinclude
 LIB := -Llib -lSDL3 -lSDL3_image -lSDL3_ttf
-BIN := $(OUT_DIR)/TerrorAndEnemy.exe
+BIN := $(OUT_DIR)/HMBG.exe
 
 SRC := $(wildcard $(SRC_DIR)/*.cc $(SRC_DIR)/*/*.cc $(SRC_DIR)/*/*/*.cc)
 OBJ := $(subst $(SRC_DIR),$(OBJ_DIR),$(SRC:%.cc=%.o))
