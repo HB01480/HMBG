@@ -1,7 +1,7 @@
 SHELL = pwsh.exe
 
-CC := clang++
-CF := -O1 -m64 -std=c++17 -Wall
+CC := clang
+CF := -O1 -m64 -std=c17 -Wall
 
 SRC_DIR := src
 OUT_DIR := out
@@ -11,10 +11,11 @@ INC := -Iinclude
 LIB := -Llib -lSDL3 -lSDL3_image -lSDL3_ttf
 BIN := $(OUT_DIR)/HMBG.exe
 
-SRC := $(wildcard $(SRC_DIR)/*.cc $(SRC_DIR)/*/*.cc $(SRC_DIR)/*/*/*.cc)
-OBJ := $(subst $(SRC_DIR),$(OBJ_DIR),$(SRC:%.cc=%.o))
+SRC := $(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/*/*.c $(SRC_DIR)/*/*/*.c)
+HDR := $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h $(SRC_DIR)/*/*/*.h)
+OBJ := $(subst $(SRC_DIR),$(OBJ_DIR),$(SRC:%.c=%.o))
 
-CH := src/common.hh
+CH := src/common.h
 PCH := $(OBJ_DIR)/common.pch
 
 
@@ -26,7 +27,7 @@ $(BIN): $(OBJ)
 	$(info Linking object files into the binary)
 	@$(CC) $(CF) -o $(BIN) $(OBJ) $(LIB)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc $(PCH)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HDR) $(PCH)
 	$(info Compiling $<)
 	@pwsh.exe -Command "New-Item -ItemType Directory -Force -Path '$(dir $@)' | Out-Null"
 	@$(CC) $(CF) -c $< $(INC) -o $@
