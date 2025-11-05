@@ -8,7 +8,7 @@
             "defines": [
                 "__FILE_NAME__"
             ],
-            "compilerPath": "F:\\program files\\LLVM-MinGW-W64\\bin\\clang++.exe",
+            "compilerPath": "F:\\program files\\LLVM-MinGW-W64\\bin\\clang.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-clang-x64"
