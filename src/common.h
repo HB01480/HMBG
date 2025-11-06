@@ -17,6 +17,8 @@ typedef long long s64;
 typedef float f32;
 typedef double f64;
 
+typedef size_t usize;
+
 
 #ifndef bool
 #define bool _Bool
