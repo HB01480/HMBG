@@ -199,7 +199,7 @@ void application_free(Application *app) {
     application_quitSDL();
 }
 
-SDL_AppResult application_update(Application *app) {
+SDL_AppResult application_onUpdate(Application *app) {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
 
@@ -208,7 +208,7 @@ SDL_AppResult application_update(Application *app) {
     return appResult;
 }
 
-SDL_AppResult application_render(Application *app) {
+SDL_AppResult application_onRender(Application *app) {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(app->gpu);
 
@@ -278,7 +278,7 @@ SDL_AppResult application_render(Application *app) {
     return appResult;
 }
 
-SDL_AppResult application_processEvents(Application *app, SDL_Event *event) {
+SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
     if (event->type == SDL_EVENT_QUIT) {

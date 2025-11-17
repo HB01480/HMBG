@@ -25,15 +25,15 @@ SDL_AppResult SDLCALL SDL_AppIterate(void *appstate) {
     Program *program = (Program *)appstate;
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
-    appResult = application_update(&program->app);
-    appResult = application_render(&program->app);
+    appResult = application_onUpdate(&program->app);
+    appResult = application_onRender(&program->app);
     return appResult;
 }
 
 SDL_AppResult SDLCALL SDL_AppEvent(void *appstate, SDL_Event *event) {
     Program *program = (Program *)appstate;
 
-    return application_processEvents(&program->app, event);
+    return application_onEvent(&program->app, event);
 }
 
 void SDLCALL SDL_AppQuit(void *appstate, SDL_AppResult result) {
