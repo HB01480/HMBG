@@ -64,10 +64,11 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     transferBufferInfo.size = app.testMesh.verticesArraySize + app.testMesh.indicesArraySize;
     app.transferBuffer = SDL_CreateGPUTransferBuffer(app.gpu, &transferBufferInfo);
 
-    RenderVertex *verticesLocation = (RenderVertex *)SDL_MapGPUTransferBuffer(app.gpu, app.transferBuffer, false);
-    SDL_memcpy(verticesLocation, (void *)app.testMesh.vertices, app.testMesh.verticesArraySize);
+    void *mappedBaseTransferBuffer = SDL_MapGPUTransferBuffer(app.gpu, app.transferBuffer, false);
+    RenderVertex *verticesLocation = mappedBaseTransferBuffer;
+    u32 *indicesLocation = mappedBaseTransferBuffer + app.testMesh.verticesArraySize;
 
-    u32 *indicesLocation = (u32 *)((void *)verticesLocation + app.testMesh.verticesArraySize);
+    SDL_memcpy(verticesLocation, (void *)app.testMesh.vertices, app.testMesh.verticesArraySize);
     SDL_memcpy(indicesLocation, (void *)app.testMesh.indices, app.testMesh.indicesArraySize);
 
     SDL_UnmapGPUTransferBuffer(app.gpu, app.transferBuffer);
