@@ -1,9 +1,9 @@
 #pragma once
-#include "common.h"
-#include "system/clock.h"
+#include "../common.h"
+#include "../system/clock.h"
 
-#include "render/vertex.h"
-#include "render/mesh.h"
+#include "../render/vertex.h"
+#include "../render/mesh.h"
 
 
 typedef struct Application {
