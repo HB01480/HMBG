@@ -1,18 +1,16 @@
 #include "application.h"
 
 
+SDL_AppResult application_initSDL();
+
+void application_quitSDL();
+
+
 Application application_init(SDL_AppResult *outResult, int argumentCount, char *arguments[]) {
     Application app; SDL_zero(app);
 
     SDL_SetAppMetadata("Highly Moddable Block Game", NULL, "com.hb01480.hmbg");
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        SDL_Log("Failed to init SDL3:\n%s", SDL_GetError());
-        *outResult = SDL_APP_FAILURE;
-    }
-    if (!TTF_Init()) {
-        SDL_Log("Failed to init SDL3_ttf:\n%s", SDL_GetError());
-        *outResult = SDL_APP_FAILURE;
-    }
+    application_initSDL();
 
     app.window = SDL_CreateWindow("Highly Moddable Block Game", 1024, 512, 0);
     if (!app.window) {
@@ -197,8 +195,7 @@ void application_free(Application *app) {
 
     SDL_DestroyWindow(app->window);
 
-    TTF_Quit();
-    SDL_Quit();
+    application_quitSDL();
 }
 
 SDL_AppResult application_update(Application *app) {
@@ -294,4 +291,25 @@ SDL_AppResult application_processEvents(Application *app, SDL_Event *event) {
     }
 
     return appResult;
+}
+
+
+SDL_AppResult application_initSDL() {
+    SDL_AppResult appResult = SDL_APP_CONTINUE;
+
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+        SDL_Log("Failed to init SDL3:\n%s", SDL_GetError());
+        appResult = SDL_APP_FAILURE;
+    }
+    if (!TTF_Init()) {
+        SDL_Log("Failed to init SDL3_ttf:\n%s", SDL_GetError());
+        appResult = SDL_APP_FAILURE;
+    }
+
+    return appResult;
+}
+
+void application_quitSDL() {
+    TTF_Quit();
+    SDL_Quit();
 }
