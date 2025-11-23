@@ -5,8 +5,8 @@ RenderMesh renderMesh_init(const RenderVertex *vertices, usize verticesArraySize
     RenderMesh mesh; SDL_zero(mesh);
     mesh.verticesArraySize = verticesArraySize;
     mesh.indicesArraySize = indicesArraySize;
-    mesh.vertices = memoryDuplicate(vertices, verticesArraySize);
-    mesh.indices = memoryDuplicate(indices, indicesArraySize);
+    mesh.vertices = SDLext_memdup(vertices, verticesArraySize);
+    mesh.indices = SDLext_memdup(indices, indicesArraySize);
 
     return mesh;
 }

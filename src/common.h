@@ -6,4 +6,4 @@
 
 #include "utils/typedefs.h"
 #include "utils/bool.h"
-#include "utils/memoryDuplicate.h"
+#include "utils/SDLext.h"
