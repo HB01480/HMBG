@@ -1,8 +1,9 @@
 #include "application.h"
 
+#include "appStateEvents.h"
+
 
 SDL_AppResult application_initSDL();
-
 void application_quitSDL();
 
 
@@ -32,7 +33,16 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
 
     SDL_Log("Platform: %s", SDL_GetPlatform());
     SDL_Log("GPU Backend: %s", SDL_GetGPUDeviceDriver(app.gpu));
-    SDL_Log("SDL Version: %i.%i.%i", SDL_VERSIONNUM_MAJOR(SDL_GetVersion()), SDL_VERSIONNUM_MINOR(SDL_GetVersion()), SDL_VERSIONNUM_MICRO(SDL_GetVersion()));
+    SDL_Log("SDL Version: %i.%i.%i", SDL_VERSIONNUM_MAJOR(SDL_GetVersion()), SDL_VERSIONNUM_MINOR(SDL_GetVersion()), SDL_VERSIONNUM_MICRO(SDL_GetVersion())); 
+
+    app.asTitleMenu = asTitleMenu_init(outResult, &app);
+    app.asGame = asGame_init(outResult, &app);
+
+    app.currentAS = AS_TITLE_MENU;
+    app.nextAS = AS_NULL;
+
+    if (app.currentAS == AS_TITLE_MENU) *outResult = asTitleMenu_onEnter(&app.asTitleMenu, &app);
+    if (app.currentAS == AS_GAME) *outResult = asGame_onEnter(&app.asGame, &app);
 
     {
         const RenderVertex vertices[] = {
@@ -181,6 +191,12 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
 }
 
 void application_free(Application *app) {
+    if (app->currentAS == AS_TITLE_MENU) asTitleMenu_onExit(&app->asTitleMenu, app);
+    if (app->currentAS == AS_GAME) asGame_onExit(&app->asGame, app);
+
+    asGame_free(&app->asGame);
+    asTitleMenu_free(&app->asTitleMenu);
+
     renderMesh_free(&app->testMesh);
 
     SDL_ReleaseGPUGraphicsPipeline(app->gpu, app->graphicsPipeline);
@@ -202,7 +218,18 @@ void application_free(Application *app) {
 SDL_AppResult application_onUpdate(Application *app) {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
+    if (app->currentAS == AS_TITLE_MENU) asTitleMenu_onUpdate(&app->asTitleMenu, app);
+    if (app->currentAS == AS_GAME) asGame_onUpdate(&app->asGame, app);
+    
+    if (app->nextAS != AS_NULL) {
+        if (app->currentAS == AS_TITLE_MENU) asTitleMenu_onExit(&app->asTitleMenu, app);
+        if (app->currentAS == AS_GAME) asGame_onExit(&app->asGame, app);
+        if (app->nextAS == AS_TITLE_MENU) asTitleMenu_onEnter(&app->asTitleMenu, app);
+        if (app->nextAS == AS_GAME) asGame_onEnter(&app->asGame, app);
 
+        app->currentAS = app->nextAS;
+        app->nextAS = AS_NULL;
+    }
 
     clockTick(&app->clock);
     return appResult;
@@ -210,6 +237,10 @@ SDL_AppResult application_onUpdate(Application *app) {
 
 SDL_AppResult application_onRender(Application *app) {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
+
+    if (app->currentAS == AS_TITLE_MENU) asTitleMenu_onRender(&app->asTitleMenu, app);
+    if (app->currentAS == AS_GAME) asGame_onRender(&app->asGame, app);
+
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(app->gpu);
 
     u32 windowWidth = 0, windowHeight = 0;
@@ -289,7 +320,23 @@ SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
         if (event->key.key == SDLK_ESCAPE) {
             appResult = SDL_APP_SUCCESS;
         }
+
+        if (event->key.key == SDLK_Z) {
+            sendAppStateEventSwitchState(AS_TITLE_MENU);
+        }
+        if (event->key.key == SDLK_X) {
+            sendAppStateEventSwitchState(AS_GAME);
+        }
     }
+
+    if (event->user.type == getAppStateEventCode()) {
+        if (event->user.code == APP_STATE_EVENT_CODE_SWITCH_STATE) {
+            app->nextAS = receiveAppStateEventSwitchState(event);
+        }
+    }
+
+    if (app->currentAS == AS_TITLE_MENU) asTitleMenu_onEvent(&app->asTitleMenu, event);
+    if (app->currentAS == AS_GAME) asGame_onEvent(&app->asGame, event);
 
     return appResult;
 }

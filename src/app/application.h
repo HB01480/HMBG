@@ -2,6 +2,10 @@
 #include "../common.h"
 #include "../system/clock.h"
 
+#include "appState.h"
+#include "as_titleMenu.h"
+#include "as_game.h"
+
 #include "../render/vertex.h"
 #include "../render/mesh.h"
 
@@ -9,6 +13,12 @@
 typedef struct Application {
     SDL_Window *window;
     Clock clock;
+
+    AS_TitleMenu asTitleMenu;
+    AS_Game asGame;
+
+    AppStateID currentAS;
+    AppStateID nextAS;
 
     SDL_GPUDevice *gpu;
     SDL_GPUBuffer *vertexBuffer;
