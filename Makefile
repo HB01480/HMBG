@@ -18,10 +18,12 @@ OBJ := $(subst $(SRC_DIR),$(OBJ_DIR),$(SRC:%.c=%.o))
 CH := src/common.h
 PCH := $(OBJ_DIR)/common.pch
 
+ARGS := debug
+
 
 run: $(BIN)
 	$(info Running the binary)
-	@$(BIN)
+	@$(BIN) $(ARGS)
 
 $(BIN): $(OBJ)
 	$(info Linking object files into the binary)

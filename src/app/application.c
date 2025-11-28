@@ -11,6 +11,11 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     Application app; SDL_zero(app);
 
     app.debug = false;
+    if (argumentCount > 1) {
+        if (SDL_strcmp(arguments[1], "debug") == 0) {
+            app.debug = true;
+        }
+    }
 
     SDL_SetAppMetadata("Highly Moddable Block Game", NULL, "com.hb01480.hmbg");
     application_initSDL();
@@ -22,7 +27,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     }
     app.clock = (Clock){};
 
-    app.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, NULL);
+    app.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, app.debug, NULL);
     if (!app.gpu) {
         SDL_Log("Failed to create GPU Device:\n%s", SDL_GetError());
         *outResult = SDL_APP_FAILURE;
@@ -235,6 +240,8 @@ SDL_AppResult application_onUpdate(Application *app) {
         app->nextAS = AS_NULL;
     }
 
+    SDL_Log("%i", app->debug);
+
     clockTick(&app->clock);
     return appResult;
 }
@@ -323,9 +330,6 @@ SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
     if (event->type == SDL_EVENT_KEY_DOWN) {
         if (event->key.key == SDLK_ESCAPE) {
             appResult = SDL_APP_SUCCESS;
-        }
-        if (event->key.key == SDLK_F10 && !event->key.repeat) {
-            app->debug = !app->debug;
         }
 
         if (event->key.key == SDLK_Z) {
