@@ -19,7 +19,7 @@ void asTitleMenu_free(AS_TitleMenu *menu) {
 SDL_AppResult asTitleMenu_onEnter(AS_TitleMenu *menu, struct Application *app) {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
-    logEnterAppState(AS_TITLE_MENU);
+    if (app->debug) logEnterAppState(AS_TITLE_MENU);
 
     return appResult;
 }
@@ -27,7 +27,7 @@ SDL_AppResult asTitleMenu_onEnter(AS_TitleMenu *menu, struct Application *app) {
 SDL_AppResult asTitleMenu_onExit(AS_TitleMenu *menu, struct Application *app) {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
-    logExitAppState(AS_TITLE_MENU);
+    if (app->debug) logExitAppState(AS_TITLE_MENU);
 
     return appResult;
 }

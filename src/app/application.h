@@ -11,6 +11,8 @@
 
 
 typedef struct Application {
+    bool debug;
+
     SDL_Window *window;
     Clock clock;
 

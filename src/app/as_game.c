@@ -19,7 +19,7 @@ void asGame_free(AS_Game *game) {
 SDL_AppResult asGame_onEnter(AS_Game *game, struct Application *app) {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
-    logEnterAppState(AS_GAME);
+    if (app->debug) logEnterAppState(AS_GAME);
 
     return appResult;
 }
@@ -27,7 +27,7 @@ SDL_AppResult asGame_onEnter(AS_Game *game, struct Application *app) {
 SDL_AppResult asGame_onExit(AS_Game *game, struct Application *app) {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
-    logExitAppState(AS_GAME);
+    if (app->debug) logExitAppState(AS_GAME);
 
     return appResult;
 }

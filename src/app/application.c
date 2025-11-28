@@ -10,6 +10,8 @@ void application_quitSDL();
 Application application_init(SDL_AppResult *outResult, int argumentCount, char *arguments[]) {
     Application app; SDL_zero(app);
 
+    app.debug = false;
+
     SDL_SetAppMetadata("Highly Moddable Block Game", NULL, "com.hb01480.hmbg");
     application_initSDL();
 
@@ -31,9 +33,11 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         *outResult = SDL_APP_FAILURE;
     }
 
+    SDL_Log("--------Application-Information-----------");
     SDL_Log("Platform: %s", SDL_GetPlatform());
     SDL_Log("GPU Backend: %s", SDL_GetGPUDeviceDriver(app.gpu));
     SDL_Log("SDL Version: %i.%i.%i", SDL_VERSIONNUM_MAJOR(SDL_GetVersion()), SDL_VERSIONNUM_MINOR(SDL_GetVersion()), SDL_VERSIONNUM_MICRO(SDL_GetVersion())); 
+    SDL_Log("------------------------------------------");
 
     app.asTitleMenu = asTitleMenu_init(outResult, &app);
     app.asGame = asGame_init(outResult, &app);
@@ -319,6 +323,9 @@ SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
     if (event->type == SDL_EVENT_KEY_DOWN) {
         if (event->key.key == SDLK_ESCAPE) {
             appResult = SDL_APP_SUCCESS;
+        }
+        if (event->key.key == SDLK_F10 && !event->key.repeat) {
+            app->debug = !app->debug;
         }
 
         if (event->key.key == SDLK_Z) {
