@@ -240,8 +240,6 @@ SDL_AppResult application_onUpdate(Application *app) {
         app->nextAS = AS_NULL;
     }
 
-    SDL_Log("%i", app->debug);
-
     clockTick(&app->clock);
     return appResult;
 }
