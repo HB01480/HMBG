@@ -1,6 +1,6 @@
 #include "application.h"
 
-#include "appStateEvents.h"
+#include "app/appStateEvents.h"
 
 
 SDL_AppResult application_initSDL();

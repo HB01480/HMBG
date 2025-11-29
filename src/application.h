@@ -1,13 +1,13 @@
 #pragma once
-#include "../common.h"
-#include "../system/clock.h"
+#include "common.h"
+#include "system/clock.h"
 
-#include "appState.h"
-#include "as_titleMenu.h"
-#include "as_game.h"
+#include "app/appState.h"
+#include "app/as_titleMenu.h"
+#include "app/as_game.h"
 
-#include "../render/vertex.h"
-#include "../render/mesh.h"
+#include "render/vertex.h"
+#include "render/mesh.h"
 
 
 typedef struct Application {
