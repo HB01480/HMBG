@@ -1,4 +1,4 @@
-#include "app/application.h"
+#include "application.h"
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
