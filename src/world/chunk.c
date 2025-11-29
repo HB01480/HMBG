@@ -36,10 +36,14 @@ RenderMesh chunk_generateSolidMesh(Chunk *chunk) {
 }
 
 RenderMesh chunk_generateLiquidMesh(Chunk *chunk) {
-
+    SDL_Log("chunk_generateLiquidMesh is not IMPLEMENTED YET");
+    return (RenderMesh){};
 }
 
 
 s32 chunk_calculateIndex(s32 x, s32 y, s32 z) {
+    SDL_assert(x <= CHUNK_SIZE_X && y <= CHUNK_SIZE_Y && z <= CHUNK_SIZE_Z
+               && x > 0 && y > 0 && z > 0);
+
     return x * (1) + y * (CHUNK_SIZE_X) + z * (CHUNK_SIZE_X * CHUNK_SIZE_Y);
 }
