@@ -9,7 +9,7 @@ void *SDLext_memdup(const void *source, usize size) {
         return NULL;
     }
 
-    // Freshly allocated memory doesn't usually overlap with any other already allocated
+    // Freshly allocated memory doesn't usually overlap with any other already allocated memory
     SDL_memcpy(destination, source, size);
     return destination;
 }
