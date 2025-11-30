@@ -6,6 +6,8 @@
 SDL_AppResult application_initSDL();
 void application_quitSDL();
 
+mat4s application_calculatePerspectiveMatrixFromWindow(SDL_Window *window);
+
 
 Application application_init(SDL_AppResult *outResult, int argumentCount, char *arguments[]) {
     Application app; SDL_zero(app);
@@ -201,7 +203,8 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     app.basicUBO.view = glms_mat4_identity();
     app.basicUBO.projection = glms_mat4_identity();
 
-    app.basicUBO.model = glms_rotate(app.basicUBO.model, 45.0f * DEGREES_TO_RADIANS, (vec3s){0.0f, 0.0f, 1.0f});
+    app.basicUBO.model = glms_rotate(app.basicUBO.model, 45.0f * DEGREES_TO_RADIANS, (vec3s){{0.0f, 0.0f, 1.0f}});
+    app.basicUBO.projection = application_calculatePerspectiveMatrixFromWindow(app.window);
 
     return app;
 }
@@ -380,4 +383,11 @@ SDL_AppResult application_initSDL() {
 void application_quitSDL() {
     TTF_Quit();
     SDL_Quit();
+}
+
+mat4s application_calculatePerspectiveMatrixFromWindow(SDL_Window *window) {
+    s32 windowW = 0, windowH = 0;
+    SDL_GetWindowSizeInPixels(window, &windowW, &windowH);
+
+    return glms_perspective(45.0f, (f32)windowW/(f32)windowH, 0.1f, 100.0f);
 }
