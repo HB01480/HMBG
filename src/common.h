@@ -7,3 +7,4 @@
 #include "utils/typedefs.h"
 #include "utils/bool.h"
 #include "utils/SDLext.h"
+#include "utils/math.h"
