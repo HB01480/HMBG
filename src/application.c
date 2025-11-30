@@ -102,8 +102,8 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         SDL_Delay(1);
     }
 
-    const char *vertexShaderPath = "res/shaders/primitive.vert.spv";
-    const char *fragmentShaderPath = "res/shaders/primitive.frag.spv";
+    const char *vertexShaderPath = "res/shaders/basic.vert.spv";
+    const char *fragmentShaderPath = "res/shaders/basic.frag.spv";
 
     u64 vertexShaderCodeSize = 0;
     u64 fragmentShaderCodeSize = 0;
@@ -139,7 +139,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     vertexShaderInfo.num_samplers = 0;
     vertexShaderInfo.num_storage_buffers = 0;
     vertexShaderInfo.num_storage_textures = 0;
-    vertexShaderInfo.num_uniform_buffers = 0;
+    vertexShaderInfo.num_uniform_buffers = 1;
 
     app.vertexShader = SDL_CreateGPUShader(app.gpu, &vertexShaderInfo);
 
@@ -151,7 +151,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     fragmentShaderInfo.num_samplers = 0;
     fragmentShaderInfo.num_storage_buffers = 0;
     fragmentShaderInfo.num_storage_textures = 0;
-    fragmentShaderInfo.num_uniform_buffers = 0;
+    fragmentShaderInfo.num_uniform_buffers = 1;
 
     app.fragmentShader = SDL_CreateGPUShader(app.gpu, &fragmentShaderInfo);
 
@@ -195,6 +195,13 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     graphicsPipelineInfo.target_info.color_target_descriptions = colorTargetDescriptions;
 
     app.graphicsPipeline = SDL_CreateGPUGraphicsPipeline(app.gpu, &graphicsPipelineInfo);
+
+    app.basicUBO.time = SDL_GetTicks() / 1000.0f;
+    app.basicUBO.model = glms_mat4_identity();
+    app.basicUBO.view = glms_mat4_identity();
+    app.basicUBO.projection = glms_mat4_identity();
+
+    app.basicUBO.model = glms_rotate(app.basicUBO.model, 45.0f * DEGREES_TO_RADIANS, (vec3s){0.0f, 0.0f, 1.0f});
 
     return app;
 }
@@ -240,7 +247,8 @@ SDL_AppResult application_onUpdate(Application *app) {
         app->nextAS = AS_NULL;
     }
 
-    clockTick(&app->clock);
+    app->basicUBO.time = SDL_GetTicks() / 1000.0f;
+    clock_tick(&app->clock);
     return appResult;
 }
 
@@ -308,6 +316,9 @@ SDL_AppResult application_onRender(Application *app) {
     indexBufferBinding.offset = 0;
 
     SDL_BindGPUIndexBuffer(renderPass, &indexBufferBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+    SDL_PushGPUVertexUniformData(commandBuffer, 0, &app->basicUBO, sizeof(app->basicUBO));
+    SDL_PushGPUFragmentUniformData(commandBuffer, 0, &app->basicUBO, sizeof(app->basicUBO));
 
     SDL_DrawGPUIndexedPrimitives(renderPass, app->testMesh.indicesArraySize/sizeof(u32), 1, 0, 0, 0);
 

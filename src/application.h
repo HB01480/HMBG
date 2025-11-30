@@ -8,6 +8,7 @@
 
 #include "render/vertex.h"
 #include "render/mesh.h"
+#include "render/basicUniformBuffer.h"
 
 
 typedef struct Application {
@@ -30,6 +31,8 @@ typedef struct Application {
     SDL_GPUShader *vertexShader;
     SDL_GPUShader *fragmentShader;
     SDL_GPUGraphicsPipeline *graphicsPipeline;
+
+    BasicUBO basicUBO;
 
     RenderMesh testMesh;
 
