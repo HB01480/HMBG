@@ -3,11 +3,11 @@
 layout (location = 0) in vec3 vPosition;
 
 layout (std140, set = 1, binding = 0) uniform BasicUBO {
-    float time;
-
     mat4 model;
     mat4 view;
     mat4 projection;
+
+    float time;
 };
 
 
