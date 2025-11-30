@@ -12,5 +12,5 @@ layout (std140, set = 1, binding = 0) uniform BasicUBO {
 
 
 void main() {
-    gl_Position = model * view * projection * vec4(vPosition, 1.0f);
+    gl_Position = projection * view * model * vec4(vPosition, 1.0f);
 }
