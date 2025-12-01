@@ -30,7 +30,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     }
     app.clock = (Clock){};
 
-    application_enableRelativeMouseMode(& app);
+    application_enableRelativeMouseMode(&app);
 
     SDL_zero(app.mouseState);
     // Since it's a pointer to a internal SDL array,
