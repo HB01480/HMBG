@@ -208,7 +208,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         (vec3s){{0.0f, 0.0f, 0.0f}},
         (vec3s){{0.0f, 1.0f, 0.0f}},
         0.0f, -90.0f,
-        50.0f, 2.5f
+        5.0f, 2.5f
     );
 
     app.basicUBO.time = SDL_GetTicks() / 1000.0f;
