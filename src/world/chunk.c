@@ -32,7 +32,7 @@ BlockID chunk_get(Chunk *chunk, s32 x, s32 y, s32 z) {
 }
 
 RenderMesh chunk_generateSolidMesh(Chunk *chunk) {
-
+    return (RenderMesh){};
 }
 
 RenderMesh chunk_generateLiquidMesh(Chunk *chunk) {
