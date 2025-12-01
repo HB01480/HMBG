@@ -5,10 +5,13 @@
 #include "app/appState.h"
 #include "app/as_titleMenu.h"
 #include "app/as_game.h"
+#include "app/mouseState.h"
+#include "app/keyState.h"
 
 #include "render/vertex.h"
 #include "render/mesh.h"
 #include "render/basicUniformBuffer.h"
+#include "render/camera.h"
 
 
 typedef struct Application {
@@ -17,11 +20,19 @@ typedef struct Application {
     SDL_Window *window;
     Clock clock;
 
+    MouseState mouseState;
+    KeyState keyState;
+
     AS_TitleMenu asTitleMenu;
     AS_Game asGame;
 
     AppStateID currentAS;
     AppStateID nextAS;
+
+    RenderCamera camera;
+    RenderMesh testMesh;
+
+    BasicUBO basicUBO;
 
     SDL_GPUDevice *gpu;
     SDL_GPUBuffer *vertexBuffer;
@@ -31,10 +42,6 @@ typedef struct Application {
     SDL_GPUShader *vertexShader;
     SDL_GPUShader *fragmentShader;
     SDL_GPUGraphicsPipeline *graphicsPipeline;
-
-    BasicUBO basicUBO;
-
-    RenderMesh testMesh;
 
 } Application;
 

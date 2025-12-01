@@ -22,12 +22,17 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     SDL_SetAppMetadata("Highly Moddable Block Game", NULL, "com.hb01480.hmbg");
     application_initSDL();
 
-    app.window = SDL_CreateWindow("Highly Moddable Block Game", 1024, 512, 0);
+    app.window = SDL_CreateWindow("Highly Moddable Block Game", 1024, 512, SDL_WINDOW_MOUSE_GRABBED | SDL_WINDOW_MOUSE_CAPTURE);
     if (!app.window) {
         SDL_Log("Failed to create window:\n%s", SDL_GetError());
         *outResult = SDL_APP_FAILURE;
     }
     app.clock = (Clock){};
+
+    SDL_zero(app.mouseState);
+    // Since it's a pointer to a internal SDL array,
+    // it gets automatically updated after all events are processed.
+    app.keyState = SDL_GetKeyboardState(NULL);
 
     app.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, app.debug, NULL);
     if (!app.gpu) {
@@ -198,6 +203,13 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
 
     app.graphicsPipeline = SDL_CreateGPUGraphicsPipeline(app.gpu, &graphicsPipelineInfo);
 
+    app.camera = renderCamera_init(
+        (vec3s){{0.0f, 0.0f, 0.0f}},
+        (vec3s){{0.0f, 1.0f, 0.0f}},
+        0.0f, -90.0f,
+        50.0f, 5.0f
+    );
+
     app.basicUBO.time = SDL_GetTicks() / 1000.0f;
     app.basicUBO.model = glms_mat4_identity();
     app.basicUBO.view = glms_mat4_identity();
@@ -250,7 +262,18 @@ SDL_AppResult application_onUpdate(Application *app) {
         app->nextAS = AS_NULL;
     }
 
+    if (app->keyState[SDL_SCANCODE_W])
+        renderCamera_move(&app->camera, CM_FORWARD, app->clock.dt);
+    if (app->keyState[SDL_SCANCODE_S])
+        renderCamera_move(&app->camera, CM_BACKWARD, app->clock.dt);
+    if (app->keyState[SDL_SCANCODE_D])
+        renderCamera_move(&app->camera, CM_RIGHTWARD, app->clock.dt);
+    if (app->keyState[SDL_SCANCODE_A])
+        renderCamera_move(&app->camera, CM_LEFTWARD, app->clock.dt);
+
+    app->basicUBO.view = renderCamera_calculateViewMatrix(&app->camera);
     app->basicUBO.time = SDL_GetTicks() / 1000.0f;
+
     clock_tick(&app->clock);
     return appResult;
 }
@@ -350,6 +373,14 @@ SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
         if (event->key.key == SDLK_X) {
             sendAppStateEventSwitchState(AS_GAME);
         }
+    }
+
+    if (event->type == SDL_EVENT_MOUSE_MOTION) {
+        vec2s position = glms_vec2_zero();
+        position.x = event->motion.x;
+        position.y = event->motion.y;
+
+        renderCamera_pan(&app->camera, position, app->clock.dt);
     }
 
     if (event->user.type == getAppStateEventCode()) {
