@@ -378,11 +378,11 @@ SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
     }
 
     if (event->type == SDL_EVENT_MOUSE_MOTION) {
-        vec2s position = glms_vec2_zero();
-        position.x = event->motion.x;
-        position.y = event->motion.y;
+        vec2s delta = glms_vec2_zero();
+        delta.x = event->motion.xrel;
+        delta.y = event->motion.yrel;
 
-        renderCamera_pan(&app->camera, position, app->clock.dt);
+        renderCamera_pan(&app->camera, delta, app->clock.dt);
     }
 
     if (event->user.type == getAppStateEventCode()) {

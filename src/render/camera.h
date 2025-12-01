@@ -21,9 +21,6 @@ typedef struct RenderCamera {
     f32 movementSpeed;
     f32 mouseSensitivity;
 
-    vec2s prevMousePosition;
-    bool firstMouse;
-
 } RenderCamera;
 
 
@@ -32,5 +29,5 @@ RenderCamera renderCamera_init(vec3s position, vec3s worldUp, f32 pitch, f32 yaw
 mat4s renderCamera_calculateViewMatrix(RenderCamera *camera);
 void renderCamera_updateCameraVectors(RenderCamera *camera);
 
-void renderCamera_pan(RenderCamera *camera, vec2s mousePosition, f32 dt);
+void renderCamera_pan(RenderCamera *camera, vec2s mouseDelta, f32 dt);
 void renderCamera_move(RenderCamera *camera, CameraDirection direction, f32 dt);

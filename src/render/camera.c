@@ -15,9 +15,6 @@ RenderCamera renderCamera_init(vec3s position, vec3s worldUp, f32 pitch, f32 yaw
     camera.movementSpeed = movementSpeed;
     camera.mouseSensitivity = mouseSensitivity;
 
-    camera.prevMousePosition = glms_vec2_zero();
-    camera.firstMouse = true;
-
     renderCamera_updateCameraVectors(&camera);
     return camera;
 }
@@ -40,14 +37,7 @@ void renderCamera_updateCameraVectors(RenderCamera *camera) {
     camera->up = glms_vec3_normalize(glms_cross(camera->right, camera->front));
 }
 
-void renderCamera_pan(RenderCamera *camera, vec2s mousePosition, f32 dt) {
-    if (camera->firstMouse) {
-        camera->prevMousePosition = mousePosition;
-        camera->firstMouse = false;
-    }
-
-    vec2s mouseDelta = glms_vec2_sub(mousePosition, camera->prevMousePosition);
-
+void renderCamera_pan(RenderCamera *camera, vec2s mouseDelta, f32 dt) {
     camera->yaw += mouseDelta.x * camera->mouseSensitivity * dt;
     camera->pitch -= mouseDelta.y * camera->mouseSensitivity * dt;
 
@@ -56,7 +46,6 @@ void renderCamera_pan(RenderCamera *camera, vec2s mousePosition, f32 dt) {
     if (camera->pitch < -89.0f)
         camera->pitch = -89.0f;
 
-    camera->prevMousePosition = mousePosition;
     renderCamera_updateCameraVectors(camera);
 }
 
