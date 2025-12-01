@@ -22,13 +22,15 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     SDL_SetAppMetadata("Highly Moddable Block Game", NULL, "com.hb01480.hmbg");
     application_initSDL();
 
-    SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_MOUSE_RELATIVE_MODE;
+    SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN;
     app.window = SDL_CreateWindow("Highly Moddable Block Game", 1024, 512, windowFlags);
     if (!app.window) {
         SDL_Log("Failed to create window:\n%s", SDL_GetError());
         *outResult = SDL_APP_FAILURE;
     }
     app.clock = (Clock){};
+
+    application_enableRelativeMouseMode(& app);
 
     SDL_zero(app.mouseState);
     // Since it's a pointer to a internal SDL array,
@@ -224,6 +226,8 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
 void application_free(Application *app) {
     if (app->currentAS == AS_TITLE_MENU) asTitleMenu_onExit(&app->asTitleMenu, app);
     if (app->currentAS == AS_GAME) asGame_onExit(&app->asGame, app);
+
+    application_disableRelativeMouseMode(app);
 
     asGame_free(&app->asGame);
     asTitleMenu_free(&app->asTitleMenu);
@@ -423,4 +427,12 @@ mat4s application_calculatePerspectiveMatrixFromWindow(SDL_Window *window) {
     SDL_GetWindowSizeInPixels(window, &windowW, &windowH);
 
     return glms_perspective(45.0f, (f32)windowW/(f32)windowH, 0.1f, 100.0f);
+}
+
+void application_enableRelativeMouseMode(Application *app) {
+    SDL_SetWindowRelativeMouseMode(app->window, true);
+}
+
+void application_disableRelativeMouseMode(Application *app) {
+    SDL_SetWindowRelativeMouseMode(app->window, false);
 }

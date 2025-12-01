@@ -52,3 +52,6 @@ void application_free(Application *app);
 SDL_AppResult application_onUpdate(Application *app);
 SDL_AppResult application_onRender(Application *app);
 SDL_AppResult application_onEvent(Application *app, SDL_Event *event);
+
+void application_enableRelativeMouseMode(Application *app);
+void application_disableRelativeMouseMode(Application *app);
