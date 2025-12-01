@@ -215,9 +215,6 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     app.basicUBO.view = glms_mat4_identity();
     app.basicUBO.projection = glms_mat4_identity();
 
-    app.basicUBO.model = glms_rotate(app.basicUBO.model, 45.0f * DEGREES_TO_RADIANS, (vec3s){{0.0f, 0.0f, 1.0f}});
-    app.basicUBO.projection = application_calculatePerspectiveMatrixFromWindow(app.window);
-
     return app;
 }
 
@@ -271,7 +268,9 @@ SDL_AppResult application_onUpdate(Application *app) {
     if (app->keyState[SDL_SCANCODE_A])
         renderCamera_move(&app->camera, CM_LEFTWARD, app->clock.dt);
 
+    app->basicUBO.model = glms_rotate(app->basicUBO.model, 45.0f * DEGREES_TO_RADIANS, (vec3s){{0.0f, 0.0f, 1.0f}});
     app->basicUBO.view = renderCamera_calculateViewMatrix(&app->camera);
+    app->basicUBO.projection = application_calculatePerspectiveMatrixFromWindow(app->window);
     app->basicUBO.time = SDL_GetTicks() / 1000.0f;
 
     clock_tick(&app->clock);
