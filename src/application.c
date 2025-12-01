@@ -22,7 +22,8 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     SDL_SetAppMetadata("Highly Moddable Block Game", NULL, "com.hb01480.hmbg");
     application_initSDL();
 
-    app.window = SDL_CreateWindow("Highly Moddable Block Game", 1024, 512, SDL_WINDOW_MOUSE_GRABBED | SDL_WINDOW_MOUSE_CAPTURE);
+    SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_MOUSE_RELATIVE_MODE;
+    app.window = SDL_CreateWindow("Highly Moddable Block Game", 1024, 512, windowFlags);
     if (!app.window) {
         SDL_Log("Failed to create window:\n%s", SDL_GetError());
         *outResult = SDL_APP_FAILURE;
@@ -214,6 +215,8 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     app.basicUBO.model = glms_mat4_identity();
     app.basicUBO.view = glms_mat4_identity();
     app.basicUBO.projection = glms_mat4_identity();
+
+    SDL_ShowWindow(app.window);
 
     return app;
 }
