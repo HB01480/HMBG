@@ -269,13 +269,13 @@ SDL_AppResult application_onUpdate(Application *app) {
     }
 
     if (app->keyState[SDL_SCANCODE_W])
-        renderCamera_move(&app->camera, CM_FORWARD, app->clock.dt);
+        renderCamera_moveForward(&app->camera, app->clock.dt);
     if (app->keyState[SDL_SCANCODE_S])
-        renderCamera_move(&app->camera, CM_BACKWARD, app->clock.dt);
-    if (app->keyState[SDL_SCANCODE_D])
-        renderCamera_move(&app->camera, CM_RIGHTWARD, app->clock.dt);
+        renderCamera_moveBackward(&app->camera, app->clock.dt);
     if (app->keyState[SDL_SCANCODE_A])
-        renderCamera_move(&app->camera, CM_LEFTWARD, app->clock.dt);
+        renderCamera_moveLeftward(&app->camera, app->clock.dt);
+    if (app->keyState[SDL_SCANCODE_D])
+        renderCamera_moveRightward(&app->camera, app->clock.dt);
 
     app->basicUBO.model = glms_rotate(app->basicUBO.model, 45.0f * DEGREES_TO_RADIANS * app->clock.dt, (vec3s){{0.0f, 0.0f, 1.0f}});
     app->basicUBO.view = renderCamera_calculateViewMatrix(&app->camera);

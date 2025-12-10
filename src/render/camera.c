@@ -49,17 +49,30 @@ void renderCamera_pan(RenderCamera *camera, vec2s mouseDelta, f32 dt) {
     renderCamera_updateCameraVectors(camera);
 }
 
-void renderCamera_move(RenderCamera *camera, CameraDirection direction, f32 dt) {
+void renderCamera_moveForward(RenderCamera *camera, f32 dt) {
     f32 velocity = camera->movementSpeed * dt;
 
-    if (direction == CM_FORWARD)
-        camera->position = glms_vec3_add(camera->position, glms_vec3_scale(camera->front, velocity));
-    if (direction == CM_BACKWARD)
-        camera->position = glms_vec3_sub(camera->position, glms_vec3_scale(camera->front, velocity));
-    if (direction == CM_LEFTWARD)
-        camera->position = glms_vec3_sub(camera->position, glms_vec3_scale(camera->right, velocity));
-    if (direction == CM_RIGHTWARD)
-        camera->position = glms_vec3_add(camera->position, glms_vec3_scale(camera->right, velocity));
+    camera->position = glms_vec3_add(camera->position, glms_vec3_scale(camera->front, velocity));
+    renderCamera_updateCameraVectors(camera);
+}
 
+void renderCamera_moveBackward(RenderCamera *camera, f32 dt) {
+    f32 velocity = camera->movementSpeed * dt;
+
+    camera->position = glms_vec3_sub(camera->position, glms_vec3_scale(camera->front, velocity));
+    renderCamera_updateCameraVectors(camera);
+}
+
+void renderCamera_moveLeftward(RenderCamera *camera, f32 dt) {
+    f32 velocity = camera->movementSpeed * dt;
+
+    camera->position = glms_vec3_sub(camera->position, glms_vec3_scale(camera->right, velocity));
+    renderCamera_updateCameraVectors(camera);
+}
+
+void renderCamera_moveRightward(RenderCamera *camera, f32 dt) {
+    f32 velocity = camera->movementSpeed * dt;
+
+    camera->position = glms_vec3_add(camera->position, glms_vec3_scale(camera->right, velocity));
     renderCamera_updateCameraVectors(camera);
 }

@@ -30,4 +30,7 @@ mat4s renderCamera_calculateViewMatrix(RenderCamera *camera);
 void renderCamera_updateCameraVectors(RenderCamera *camera);
 
 void renderCamera_pan(RenderCamera *camera, vec2s mouseDelta, f32 dt);
-void renderCamera_move(RenderCamera *camera, CameraDirection direction, f32 dt);
+void renderCamera_moveForward(RenderCamera *camera, f32 dt);
+void renderCamera_moveBackward(RenderCamera *camera, f32 dt);
+void renderCamera_moveLeftward(RenderCamera *camera, f32 dt);
+void renderCamera_moveRightward(RenderCamera *camera, f32 dt);
