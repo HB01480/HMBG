@@ -6,8 +6,6 @@
 SDL_AppResult application_initSDL();
 void application_quitSDL();
 
-mat4s application_calculatePerspectiveMatrixFromWindow(SDL_Window *window);
-
 
 Application application_init(SDL_AppResult *outResult, int argumentCount, char *arguments[]) {
     Application app; SDL_zero(app);
@@ -19,11 +17,15 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         }
     }
 
-    SDL_SetAppMetadata("Highly Moddable Block Game", NULL, "com.hb01480.hmbg");
+    const char *appTitle = "Highly Moddable Block Game";
+    const s32 appWidth = 1024;
+    const s32 appHeight = 512;
+
+    SDL_SetAppMetadata(appTitle, NULL, "com.hb01480.hmbg");
     application_initSDL();
 
     SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN;
-    app.window = SDL_CreateWindow("Highly Moddable Block Game", 1024, 512, windowFlags);
+    app.window = SDL_CreateWindow(appTitle, appWidth, appHeight, windowFlags);
     if (!app.window) {
         SDL_Log("Failed to create window:\n%s", SDL_GetError());
         *outResult = SDL_APP_FAILURE;
@@ -34,7 +36,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
 
     SDL_zero(app.mouseState);
     // Since it's a pointer to a internal SDL array,
-    // it gets automatically updated after all events are processed.
+    // it gets automatically updated after all SDL events are processed.
     app.keyState = SDL_GetKeyboardState(NULL);
 
     app.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, app.debug, NULL);
@@ -277,7 +279,7 @@ SDL_AppResult application_onUpdate(Application *app) {
 
     app->basicUBO.model = glms_rotate(app->basicUBO.model, 45.0f * DEGREES_TO_RADIANS * app->clock.dt, (vec3s){{0.0f, 0.0f, 1.0f}});
     app->basicUBO.view = renderCamera_calculateViewMatrix(&app->camera);
-    app->basicUBO.projection = application_calculatePerspectiveMatrixFromWindow(app->window);
+    app->basicUBO.projection = calculatePerspectiveMatrixFromWindow(app->window);
     app->basicUBO.time = SDL_GetTicks() / 1000.0f;
 
     clock_tick(&app->clock);
@@ -401,7 +403,6 @@ SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
     return appResult;
 }
 
-
 SDL_AppResult application_initSDL() {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
@@ -422,17 +423,17 @@ void application_quitSDL() {
     SDL_Quit();
 }
 
-mat4s application_calculatePerspectiveMatrixFromWindow(SDL_Window *window) {
-    s32 windowW = 0, windowH = 0;
-    SDL_GetWindowSizeInPixels(window, &windowW, &windowH);
-
-    return glms_perspective(45.0f, (f32)windowW/(f32)windowH, 0.1f, 100.0f);
-}
-
 void application_enableRelativeMouseMode(Application *app) {
     SDL_SetWindowRelativeMouseMode(app->window, true);
 }
 
 void application_disableRelativeMouseMode(Application *app) {
     SDL_SetWindowRelativeMouseMode(app->window, false);
+}
+
+mat4s calculatePerspectiveMatrixFromWindow(SDL_Window *window) {
+    s32 width = 0, height = 0; SDL_GetWindowSizeInPixels(window, &width, &height);
+    f32 aspectRatio = (f32)width/(f32)height;
+
+    return glms_perspective(45.0f, aspectRatio, 0.1f, 100.0f);
 }

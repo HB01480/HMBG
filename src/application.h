@@ -55,3 +55,6 @@ SDL_AppResult application_onEvent(Application *app, SDL_Event *event);
 
 void application_enableRelativeMouseMode(Application *app);
 void application_disableRelativeMouseMode(Application *app);
+
+// if application was a class, then this function would be static
+mat4s calculatePerspectiveMatrixFromWindow(SDL_Window *window);
