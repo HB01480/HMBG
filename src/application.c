@@ -216,7 +216,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     );
 
     app.basicUBO.time = SDL_GetTicks() / 1000.0f;
-    app.basicUBO.model = glms_mat4_identity();
+    app.basicUBO.model = glms_translate_make(glms_vec3_make((f32 []){0.0f, 0.0f, -1.0f}));
     app.basicUBO.view = glms_mat4_identity();
     app.basicUBO.projection = glms_mat4_identity();
 
