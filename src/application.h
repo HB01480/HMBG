@@ -37,7 +37,6 @@ typedef struct Application {
     SDL_GPUDevice *gpu;
     SDL_GPUBuffer *vertexBuffer;
     SDL_GPUBuffer *indexBuffer;
-    SDL_GPUBuffer *meshBuffer;
     SDL_GPUTransferBuffer *transferBuffer;
     SDL_GPUShader *vertexShader;
     SDL_GPUShader *fragmentShader;
