@@ -153,7 +153,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     vertexShaderInfo.num_storage_textures = 0;
     vertexShaderInfo.num_uniform_buffers = 1;
 
-    app.vertexShader = SDL_CreateGPUShader(app.gpu, &vertexShaderInfo);
+    SDL_GPUShader *vertexShader = SDL_CreateGPUShader(app.gpu, &vertexShaderInfo);
 
     SDL_GPUShaderCreateInfo fragmentShaderInfo = {};
     fragmentShaderInfo.code_size = fragmentShaderCodeSize;
@@ -165,14 +165,14 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     fragmentShaderInfo.num_storage_textures = 0;
     fragmentShaderInfo.num_uniform_buffers = 1;
 
-    app.fragmentShader = SDL_CreateGPUShader(app.gpu, &fragmentShaderInfo);
+    SDL_GPUShader *fragmentShader = SDL_CreateGPUShader(app.gpu, &fragmentShaderInfo);
 
     SDL_free(vertexShaderCode);
     SDL_free(fragmentShaderCode);
 
     SDL_GPUGraphicsPipelineCreateInfo graphicsPipelineInfo = {};
-    graphicsPipelineInfo.vertex_shader = app.vertexShader;
-    graphicsPipelineInfo.fragment_shader = app.fragmentShader;
+    graphicsPipelineInfo.vertex_shader = vertexShader;
+    graphicsPipelineInfo.fragment_shader = fragmentShader;
     graphicsPipelineInfo.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
 
     SDL_GPUVertexBufferDescription vertexBufferDescriptions[1]; SDL_zeroa(vertexBufferDescriptions);
@@ -208,6 +208,9 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
 
     app.graphicsPipeline = SDL_CreateGPUGraphicsPipeline(app.gpu, &graphicsPipelineInfo);
 
+    SDL_ReleaseGPUShader(app.gpu, vertexShader);
+    SDL_ReleaseGPUShader(app.gpu, fragmentShader);
+
     app.camera = renderCamera_init(
         (vec3s){{0.0f, 0.0f, 0.0f}},
         (vec3s){{0.0f, 1.0f, 0.0f}},
@@ -237,9 +240,6 @@ void application_free(Application *app) {
     renderMesh_free(&app->testMesh);
 
     SDL_ReleaseGPUGraphicsPipeline(app->gpu, app->graphicsPipeline);
-
-    SDL_ReleaseGPUShader(app->gpu, app->vertexShader);
-    SDL_ReleaseGPUShader(app->gpu, app->fragmentShader);
 
     SDL_ReleaseGPUTransferBuffer(app->gpu, app->transferBuffer);
     SDL_ReleaseGPUBuffer(app->gpu, app->indexBuffer);

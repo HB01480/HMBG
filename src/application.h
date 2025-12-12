@@ -38,8 +38,6 @@ typedef struct Application {
     SDL_GPUBuffer *vertexBuffer;
     SDL_GPUBuffer *indexBuffer;
     SDL_GPUTransferBuffer *transferBuffer;
-    SDL_GPUShader *vertexShader;
-    SDL_GPUShader *fragmentShader;
     SDL_GPUGraphicsPipeline *graphicsPipeline;
 
 } Application;
