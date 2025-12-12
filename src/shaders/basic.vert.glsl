@@ -7,7 +7,7 @@ layout (std140, set = 1, binding = 0) uniform BasicUBO {
     mat4 view;
     mat4 projection;
 
-    float time;
+    float timeSeconds;
 };
 
 

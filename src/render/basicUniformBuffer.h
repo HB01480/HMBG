@@ -5,6 +5,6 @@
 typedef struct BasicUBO {
     mat4s model, view, projection;
 
-    f32 time;
+    f32 timeSeconds;
 
 } BasicUBO;
