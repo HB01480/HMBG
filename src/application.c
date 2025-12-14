@@ -2,6 +2,8 @@
 
 #include "app/appStateEvents.h"
 
+#include "render/shader.h"
+
 
 SDL_AppResult application_initSDL();
 void application_quitSDL();
@@ -114,61 +116,23 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         SDL_Delay(1);
     }
 
-    const char *vertexShaderPath = "res/shaders/basic.vert.spv";
-    const char *fragmentShaderPath = "res/shaders/basic.frag.spv";
+    SDL_GPUShader *vertexShader = createGPUShader(
+        app.gpu,
+        gameStorage,
+        "res/shaders/basic.vert.spv",
+        SDL_GPU_SHADERSTAGE_VERTEX,
+        SDL_GPU_SHADERFORMAT_SPIRV
+    );
 
-    u64 vertexShaderCodeSize = 0;
-    u64 fragmentShaderCodeSize = 0;
-    if (!SDL_GetStorageFileSize(gameStorage, vertexShaderPath, &vertexShaderCodeSize)) {
-        SDL_Log("Can't get the file size of '%s'", vertexShaderPath);
-        *outResult = SDL_APP_FAILURE;
-    }
-    if (!SDL_GetStorageFileSize(gameStorage, fragmentShaderPath, &fragmentShaderCodeSize)) {
-        SDL_Log("Can't get the file size of '%s'", fragmentShaderPath);
-        *outResult = SDL_APP_FAILURE;
-    }
-    u8 *vertexShaderCode = SDL_malloc(vertexShaderCodeSize);
-    u8 *fragmentShaderCode = SDL_malloc(fragmentShaderCodeSize);
-    SDL_assert(vertexShaderCode);
-    SDL_assert(fragmentShaderCode);
-
-    if (!SDL_ReadStorageFile(gameStorage, vertexShaderPath, (void *)vertexShaderCode, vertexShaderCodeSize)) {
-        SDL_Log("Can't read the file of '%s'", vertexShaderPath);
-        *outResult = SDL_APP_FAILURE;
-    }
-    if (!SDL_ReadStorageFile(gameStorage, fragmentShaderPath, (void *)fragmentShaderCode, fragmentShaderCodeSize)) {
-        SDL_Log("Can't read the file of '%s'", fragmentShaderPath);
-        *outResult = SDL_APP_FAILURE;
-    }
+    SDL_GPUShader *fragmentShader = createGPUShader(
+        app.gpu,
+        gameStorage,
+        "res/shaders/basic.frag.spv",
+        SDL_GPU_SHADERSTAGE_FRAGMENT,
+        SDL_GPU_SHADERFORMAT_SPIRV
+    );
 
     SDL_CloseStorage(gameStorage);
-
-    SDL_GPUShaderCreateInfo vertexShaderInfo = {};
-    vertexShaderInfo.code_size = vertexShaderCodeSize;
-    vertexShaderInfo.code = vertexShaderCode;
-    vertexShaderInfo.stage = SDL_GPU_SHADERSTAGE_VERTEX;
-    vertexShaderInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
-    vertexShaderInfo.num_samplers = 0;
-    vertexShaderInfo.num_storage_buffers = 0;
-    vertexShaderInfo.num_storage_textures = 0;
-    vertexShaderInfo.num_uniform_buffers = 1;
-
-    SDL_GPUShader *vertexShader = SDL_CreateGPUShader(app.gpu, &vertexShaderInfo);
-
-    SDL_GPUShaderCreateInfo fragmentShaderInfo = {};
-    fragmentShaderInfo.code_size = fragmentShaderCodeSize;
-    fragmentShaderInfo.code = fragmentShaderCode;
-    fragmentShaderInfo.stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
-    fragmentShaderInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
-    fragmentShaderInfo.num_samplers = 0;
-    fragmentShaderInfo.num_storage_buffers = 0;
-    fragmentShaderInfo.num_storage_textures = 0;
-    fragmentShaderInfo.num_uniform_buffers = 1;
-
-    SDL_GPUShader *fragmentShader = SDL_CreateGPUShader(app.gpu, &fragmentShaderInfo);
-
-    SDL_free(vertexShaderCode);
-    SDL_free(fragmentShaderCode);
 
     SDL_GPUGraphicsPipelineCreateInfo graphicsPipelineInfo = {};
     graphicsPipelineInfo.vertex_shader = vertexShader;
