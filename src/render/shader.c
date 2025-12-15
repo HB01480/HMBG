@@ -1,7 +1,7 @@
 #include "shader.h"
 
 
-SDL_GPUShader *createGPUShader(SDL_GPUDevice *gpu, SDL_Storage *storage, const char *filepath, SDL_GPUShaderStage stage, SDL_GPUShaderFormat format) {
+SDL_GPUShader *createGPUShaderFromFilepath(SDL_GPUDevice *gpu, SDL_Storage *storage, const char *filepath, SDL_GPUShaderStage stage, SDL_GPUShaderFormat format) {
     void *fileContent = NULL;
     usize fileSize = 0;
 

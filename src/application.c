@@ -116,7 +116,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         SDL_Delay(1);
     }
 
-    SDL_GPUShader *vertexShader = createGPUShader(
+    SDL_GPUShader *vertexShader = createGPUShaderFromFilepath(
         app.gpu,
         gameStorage,
         "res/shaders/basic.vert.spv",
@@ -124,7 +124,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         SDL_GPU_SHADERFORMAT_SPIRV
     );
 
-    SDL_GPUShader *fragmentShader = createGPUShader(
+    SDL_GPUShader *fragmentShader = createGPUShaderFromFilepath(
         app.gpu,
         gameStorage,
         "res/shaders/basic.frag.spv",
