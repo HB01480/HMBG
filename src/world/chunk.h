@@ -1,14 +1,10 @@
 #pragma once
 #include "../common.h"
+#include "worldConstants.h"
 #include "block/block.h"
 
 #include "../render/mesh.h"
 
-
-#define CHUNK_SIZE 32
-#define CHUNK_SIZE_X CHUNK_SIZE
-#define CHUNK_SIZE_Y CHUNK_SIZE
-#define CHUNK_SIZE_Z CHUNK_SIZE
 
 
 typedef struct Chunk {

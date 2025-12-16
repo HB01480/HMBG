@@ -1,0 +1,7 @@
+#pragma once
+
+
+#define CHUNK_SIZE 32
+#define CHUNK_SIZE_X CHUNK_SIZE
+#define CHUNK_SIZE_Y CHUNK_SIZE
+#define CHUNK_SIZE_Z CHUNK_SIZE
