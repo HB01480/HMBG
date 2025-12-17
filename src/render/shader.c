@@ -1,7 +1,7 @@
 #include "shader.h"
 
 
-SDL_GPUShader *createGPUShaderFromFilepath(SDL_GPUDevice *gpu, SDL_Storage *storage, const char *filepath, SDL_GPUShaderStage stage, SDL_GPUShaderFormat format) {
+SDL_GPUShader *createGPUShaderFromFilepath(SDL_GPUDevice *gpu, SDL_Storage *storage, const char *filepath, SDL_GPUShaderStage stage, SDL_GPUShaderFormat format, u32 numSamplers, u32 numStorageBuffers, u32 numStorageTextures, u32 numUniformBuffers) {
     void *fileContent = NULL;
     usize fileSize = 0;
 
@@ -26,10 +26,10 @@ SDL_GPUShader *createGPUShaderFromFilepath(SDL_GPUDevice *gpu, SDL_Storage *stor
     shaderInfo.code = fileContent;
     shaderInfo.stage = stage;
     shaderInfo.format = format;
-    shaderInfo.num_samplers = 0;
-    shaderInfo.num_storage_buffers = 0;
-    shaderInfo.num_storage_textures = 0;
-    shaderInfo.num_uniform_buffers = 1;
+    shaderInfo.num_samplers = numSamplers;
+    shaderInfo.num_storage_buffers = numStorageBuffers;
+    shaderInfo.num_storage_textures = numStorageTextures;
+    shaderInfo.num_uniform_buffers = numUniformBuffers;
 
     SDL_GPUShader *shader = SDL_CreateGPUShader(gpu, &shaderInfo);
     if (!shader) {
@@ -38,4 +38,12 @@ SDL_GPUShader *createGPUShaderFromFilepath(SDL_GPUDevice *gpu, SDL_Storage *stor
     }
 
     return shader;
+}
+
+SDL_GPUShader *createGPUVertexShaderFromFilepath(SDL_GPUDevice *gpu, SDL_Storage *storage, const char *filepath, SDL_GPUShaderFormat format, u32 numSamplers, u32 numStorageBuffers, u32 numStorageTextures, u32 numUniformBuffers) {
+    createGPUShaderFromFilepath(gpu, storage, filepath, SDL_GPU_SHADERSTAGE_VERTEX, format, numSamplers, numStorageBuffers, numStorageTextures, numUniformBuffers);
+}
+
+SDL_GPUShader *createGPUFragmentShaderFromFilepath(SDL_GPUDevice *gpu, SDL_Storage *storage, const char *filepath, SDL_GPUShaderFormat format, u32 numSamplers, u32 numStorageBuffers, u32 numStorageTextures, u32 numUniformBuffers) {
+    createGPUShaderFromFilepath(gpu, storage, filepath, SDL_GPU_SHADERSTAGE_FRAGMENT, format, numSamplers, numStorageBuffers, numStorageTextures, numUniformBuffers);
 }

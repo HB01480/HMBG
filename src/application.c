@@ -116,20 +116,20 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         SDL_Delay(1);
     }
 
-    SDL_GPUShader *vertexShader = createGPUShaderFromFilepath(
+    SDL_GPUShader *vertexShader = createGPUVertexShaderFromFilepath(
         app.gpu,
         gameStorage,
         "res/shaders/basic.vert.spv",
-        SDL_GPU_SHADERSTAGE_VERTEX,
-        SDL_GPU_SHADERFORMAT_SPIRV
+        SDL_GPU_SHADERFORMAT_SPIRV,
+        0, 0, 0, 1
     );
 
-    SDL_GPUShader *fragmentShader = createGPUShaderFromFilepath(
+    SDL_GPUShader *fragmentShader = createGPUFragmentShaderFromFilepath(
         app.gpu,
         gameStorage,
         "res/shaders/basic.frag.spv",
-        SDL_GPU_SHADERSTAGE_FRAGMENT,
-        SDL_GPU_SHADERFORMAT_SPIRV
+        SDL_GPU_SHADERFORMAT_SPIRV,
+        0, 0, 0, 1
     );
 
     SDL_CloseStorage(gameStorage);
