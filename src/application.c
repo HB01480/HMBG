@@ -134,7 +134,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
 
     SDL_CloseStorage(gameStorage);
 
-    SDL_GPUGraphicsPipelineCreateInfo graphicsPipelineInfo = {};
+    SDL_GPUGraphicsPipelineCreateInfo graphicsPipelineInfo = {}; SDL_zero(graphicsPipelineInfo);
     graphicsPipelineInfo.vertex_shader = vertexShader;
     graphicsPipelineInfo.fragment_shader = fragmentShader;
     graphicsPipelineInfo.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
