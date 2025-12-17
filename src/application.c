@@ -178,7 +178,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
     app.camera = renderCamera_init(
         (vec3s){{0.0f, 0.0f, 0.0f}},
         (vec3s){{0.0f, 1.0f, 0.0f}},
-        0.0f, -90.0f,
+        0.0f, 0.0f,
         5.0f, 2.5f
     );
 
