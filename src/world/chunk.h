@@ -16,7 +16,7 @@ typedef struct Chunk {
 Chunk *chunk_init();
 void chunk_free(Chunk *chunk);
 
-void chunk_set(Chunk *chunk, s32 x, s32 y, s32 z, BlockID block);
-BlockID chunk_get(Chunk *chunk, s32 x, s32 y, s32 z);
+void chunk_setBlock(Chunk *chunk, s32 x, s32 y, s32 z, BlockID block);
+BlockID chunk_getBlock(Chunk *chunk, s32 x, s32 y, s32 z);
 RenderMesh chunk_generateSolidMesh(Chunk *chunk);
 RenderMesh chunk_generateLiquidMesh(Chunk *chunk);

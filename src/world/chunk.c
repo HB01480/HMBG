@@ -21,12 +21,12 @@ void chunk_free(Chunk *chunk) {
     SDL_free(chunk);
 }
 
-void chunk_set(Chunk *chunk, s32 x, s32 y, s32 z, BlockID block) {
+void chunk_setBlock(Chunk *chunk, s32 x, s32 y, s32 z, BlockID block) {
     s32 index = chunk_calculateIndex(x, y, z);
     chunk->blocks[index] = block;
 }
 
-BlockID chunk_get(Chunk *chunk, s32 x, s32 y, s32 z) {
+BlockID chunk_getBlock(Chunk *chunk, s32 x, s32 y, s32 z) {
     s32 index = chunk_calculateIndex(x, y, z);
     return chunk->blocks[index];
 }
