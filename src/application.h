@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
-#include "system/clock.h"
 
+#include "app/clock.h"
 #include "app/appState.h"
 #include "app/as_titleMenu.h"
 #include "app/as_game.h"
