@@ -82,20 +82,23 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         app.testMesh = renderMesh_init(vertices, sizeof(vertices), indices, sizeof(indices));
     }
 
-    SDL_GPUBufferCreateInfo vertexBufferInfo = {};
-    vertexBufferInfo.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
-    vertexBufferInfo.size = app.testMesh.verticesArraySize;
-    app.vertexBuffer = SDL_CreateGPUBuffer(app.gpu, &vertexBufferInfo);
+    app.vertexBuffer = SDL_CreateGPUBuffer(app.gpu, &(SDL_GPUBufferCreateInfo){
+        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+        .size = app.testMesh.verticesArraySize,
+        .props = 0
+    });
 
-    SDL_GPUBufferCreateInfo indexBufferInfo = {};
-    indexBufferInfo.usage = SDL_GPU_BUFFERUSAGE_INDEX;
-    indexBufferInfo.size = app.testMesh.indicesArraySize;
-    app.indexBuffer = SDL_CreateGPUBuffer(app.gpu, &indexBufferInfo);
+    app.indexBuffer = SDL_CreateGPUBuffer(app.gpu, &(SDL_GPUBufferCreateInfo){
+        .usage = SDL_GPU_BUFFERUSAGE_INDEX,
+        .size = app.testMesh.indicesArraySize,
+        .props = 0
+    });
 
-    SDL_GPUTransferBufferCreateInfo transferBufferInfo = {};
-    transferBufferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-    transferBufferInfo.size = app.testMesh.verticesArraySize + app.testMesh.indicesArraySize;
-    app.transferBuffer = SDL_CreateGPUTransferBuffer(app.gpu, &transferBufferInfo);
+    app.transferBuffer = SDL_CreateGPUTransferBuffer(app.gpu, &(SDL_GPUTransferBufferCreateInfo){
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = app.testMesh.verticesArraySize + app.testMesh.indicesArraySize,
+        .props = 0
+    });
 
     void *mappedBaseTransferBuffer = SDL_MapGPUTransferBuffer(app.gpu, app.transferBuffer, false);
     RenderVertex *verticesLocation = mappedBaseTransferBuffer;
@@ -134,43 +137,49 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
 
     SDL_CloseStorage(gameStorage);
 
-    SDL_GPUGraphicsPipelineCreateInfo graphicsPipelineInfo = {}; SDL_zero(graphicsPipelineInfo);
-    graphicsPipelineInfo.vertex_shader = vertexShader;
-    graphicsPipelineInfo.fragment_shader = fragmentShader;
-    graphicsPipelineInfo.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+    app.graphicsPipeline = SDL_CreateGPUGraphicsPipeline(app.gpu, &(SDL_GPUGraphicsPipelineCreateInfo){
+        .vertex_shader = vertexShader,
+        .fragment_shader = fragmentShader,
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
 
-    SDL_GPUVertexBufferDescription vertexBufferDescriptions[1]; SDL_zeroa(vertexBufferDescriptions);
-    vertexBufferDescriptions[0].slot = 0;
-    vertexBufferDescriptions[0].pitch = sizeof(RenderVertex);
-    vertexBufferDescriptions[0].input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
-    vertexBufferDescriptions[0].instance_step_rate = 0;
+        .vertex_input_state = {
+            .num_vertex_buffers = 1,
+            .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription []){
+                {
+                    .slot = 0,
+                    .pitch = sizeof(RenderVertex),
+                    .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+                    .instance_step_rate = 0
+                }
+            },
 
-    graphicsPipelineInfo.vertex_input_state.num_vertex_buffers = sizeof(vertexBufferDescriptions) / sizeof(SDL_GPUVertexBufferDescription);
-    graphicsPipelineInfo.vertex_input_state.vertex_buffer_descriptions = vertexBufferDescriptions;
+            .num_vertex_attributes = 1,
+            .vertex_attributes = (SDL_GPUVertexAttribute []){
+                {
+                    .buffer_slot = 0,
+                    .location = 0,
+                    .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+                    .offset = offsetof(RenderVertex, position)
+                }
+            }
+        },
 
-    SDL_GPUVertexAttribute vertexAttributeDescriptions[1]; SDL_zeroa(vertexAttributeDescriptions);
-    vertexAttributeDescriptions[0].buffer_slot = 0;
-    vertexAttributeDescriptions[0].location = 0;
-    vertexAttributeDescriptions[0].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-    vertexAttributeDescriptions[0].offset = offsetof(RenderVertex, position);
-
-    graphicsPipelineInfo.vertex_input_state.num_vertex_attributes = sizeof(vertexAttributeDescriptions) / sizeof(SDL_GPUVertexAttribute);
-    graphicsPipelineInfo.vertex_input_state.vertex_attributes = vertexAttributeDescriptions;
-
-    SDL_GPUColorTargetDescription colorTargetDescriptions[1]; SDL_zeroa(colorTargetDescriptions);
-    colorTargetDescriptions[0].blend_state.enable_blend = true;
-    colorTargetDescriptions[0].blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
-    colorTargetDescriptions[0].blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
-    colorTargetDescriptions[0].blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
-    colorTargetDescriptions[0].blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
-    colorTargetDescriptions[0].blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
-    colorTargetDescriptions[0].blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
-    colorTargetDescriptions[0].format = SDL_GetGPUSwapchainTextureFormat(app.gpu, app.window);
-
-    graphicsPipelineInfo.target_info.num_color_targets = sizeof(colorTargetDescriptions) / sizeof(SDL_GPUColorTargetDescription);
-    graphicsPipelineInfo.target_info.color_target_descriptions = colorTargetDescriptions;
-
-    app.graphicsPipeline = SDL_CreateGPUGraphicsPipeline(app.gpu, &graphicsPipelineInfo);
+        .target_info = {
+            .num_color_targets = 1,
+            .color_target_descriptions = (SDL_GPUColorTargetDescription []){
+                {
+                    .blend_state.enable_blend = true,
+                    .blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD,
+                    .blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+                    .blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+                    .blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                    .blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+                    .blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                    .format = SDL_GetGPUSwapchainTextureFormat(app.gpu, app.window)
+                }
+            }
+        }
+    });
 
     SDL_ReleaseGPUShader(app.gpu, vertexShader);
     SDL_ReleaseGPUShader(app.gpu, fragmentShader);
