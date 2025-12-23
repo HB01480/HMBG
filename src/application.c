@@ -106,9 +106,9 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         .props = 0
     });
 
-    void *mappedBaseTransferBuffer = SDL_MapGPUTransferBuffer(app.gpu, app.transferBuffer, false);
-    RenderVertex *verticesLocation = mappedBaseTransferBuffer;
-    u32 *indicesLocation = mappedBaseTransferBuffer + app.testMesh.verticesArraySize;
+    void *mappedTransferBuffer = SDL_MapGPUTransferBuffer(app.gpu, app.transferBuffer, false);
+    RenderVertex *verticesLocation = mappedTransferBuffer;
+    u32 *indicesLocation = mappedTransferBuffer + app.testMesh.verticesArraySize;
 
     SDL_memcpy(verticesLocation, (void *)app.testMesh.vertices, app.testMesh.verticesArraySize);
     SDL_memcpy(indicesLocation, (void *)app.testMesh.indices, app.testMesh.indicesArraySize);
