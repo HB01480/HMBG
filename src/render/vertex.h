@@ -5,5 +5,6 @@
 
 typedef struct RenderVertex {
     vec3 position;
+    vec2 texCoords;
 
 } RenderVertex;
