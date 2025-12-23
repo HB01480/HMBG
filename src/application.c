@@ -69,10 +69,10 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
 
     {
         const RenderVertex vertices[] = {
-            {{ 0.5f,  0.5f,  0.0f}},
-            {{ 0.5f, -0.5f,  0.0f}},
-            {{-0.5f, -0.5f,  0.0f}},
-            {{-0.5f,  0.5f,  0.0f}}
+            {{ 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f}},
+            {{ 0.5f, -0.5f,  0.0f}, {1.0f, 0.0f}},
+            {{-0.5f, -0.5f,  0.0f}, {0.0f, 0.0f}},
+            {{-0.5f,  0.5f,  0.0f}, {0.0f, 1.0f}}
         };
         const u32 indices[] = {
             0, 1, 2,
