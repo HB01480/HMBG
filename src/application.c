@@ -100,6 +100,12 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         .props = 0
     });
 
+    app.textureTransferBuffer = SDL_CreateGPUTransferBuffer(app.gpu, &(SDL_GPUTransferBufferCreateInfo){
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = app.testMesh.verticesArraySize + app.testMesh.indicesArraySize,
+        .props = 0
+    });
+
     void *mappedBaseTransferBuffer = SDL_MapGPUTransferBuffer(app.gpu, app.transferBuffer, false);
     RenderVertex *verticesLocation = mappedBaseTransferBuffer;
     u32 *indicesLocation = mappedBaseTransferBuffer + app.testMesh.verticesArraySize;
@@ -212,6 +218,7 @@ void application_free(Application *app) {
     SDL_ReleaseGPUGraphicsPipeline(app->gpu, app->graphicsPipeline);
 
     SDL_ReleaseGPUTransferBuffer(app->gpu, app->transferBuffer);
+    SDL_ReleaseGPUTransferBuffer(app->gpu, app->textureTransferBuffer);
     SDL_ReleaseGPUBuffer(app->gpu, app->indexBuffer);
     SDL_ReleaseGPUBuffer(app->gpu, app->vertexBuffer);
 
