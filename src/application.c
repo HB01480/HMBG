@@ -182,10 +182,7 @@ Application application_init(SDL_AppResult *outResult, int argumentCount, char *
         5.0f, 2.5f
     );
 
-    app.basicUBO.timeSeconds = SDL_GetTicks() / 1000.0f;
-    app.basicUBO.model = glms_translate_make(glms_vec3_make((f32 []){1.0f, 0.0f, -1.0f}));
-    app.basicUBO.view = glms_mat4_identity();
-    app.basicUBO.projection = glms_mat4_identity();
+    app.testMesh_modelMatrix = glms_translate_make(glms_vec3_make((f32 []){0.0f, 0.0f, -1.0f}));
 
     SDL_ShowWindow(app.window);
 
@@ -240,11 +237,6 @@ SDL_AppResult application_onUpdate(Application *app) {
         renderCamera_moveLeftward(&app->camera, app->clock.dt);
     if (app->keyState[SDL_SCANCODE_D])
         renderCamera_moveRightward(&app->camera, app->clock.dt);
-
-    app->basicUBO.model = glms_rotate(app->basicUBO.model, 45.0f * DEGREES_TO_RADIANS * app->clock.dt, (vec3s){{0.0f, 0.0f, 1.0f}});
-    app->basicUBO.view = renderCamera_calculateViewMatrix(&app->camera);
-    app->basicUBO.projection = calculatePerspectiveMatrixFromWindow(app->window);
-    app->basicUBO.timeSeconds = SDL_GetTicks() / 1000.0f;
 
     clock_tick(&app->clock);
     return appResult;
@@ -315,8 +307,14 @@ SDL_AppResult application_onRender(Application *app) {
 
     SDL_BindGPUIndexBuffer(renderPass, &indexBufferBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 
-    SDL_PushGPUVertexUniformData(commandBuffer, 0, &app->basicUBO, sizeof(app->basicUBO));
-    SDL_PushGPUFragmentUniformData(commandBuffer, 0, &app->basicUBO, sizeof(app->basicUBO));
+    BasicUBO ubo; SDL_zero(ubo);
+    ubo.model = app->testMesh_modelMatrix;
+    ubo.view = renderCamera_calculateViewMatrix(&app->camera);
+    ubo.projection = calculatePerspectiveMatrixFromWindow(app->window);
+    ubo.timeSeconds = SDL_GetTicks() / 1000.0f;
+
+    SDL_PushGPUVertexUniformData(commandBuffer, 0, &ubo, sizeof(ubo));
+    SDL_PushGPUFragmentUniformData(commandBuffer, 0, &ubo, sizeof(ubo));
 
     SDL_DrawGPUIndexedPrimitives(renderPass, app->testMesh.indicesArraySize/sizeof(u32), 1, 0, 0, 0);
 

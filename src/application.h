@@ -31,8 +31,7 @@ typedef struct Application {
 
     RenderCamera camera;
     RenderMesh testMesh;
-
-    BasicUBO basicUBO;
+    mat4s testMesh_modelMatrix;
 
     SDL_GPUDevice *gpu;
     SDL_GPUBuffer *vertexBuffer;
