@@ -279,26 +279,32 @@ SDL_AppResult application_onRender(Application *app) {
 
     SDL_GPUCopyPass *copyPass = SDL_BeginGPUCopyPass(commandBuffer);
 
-    SDL_GPUTransferBufferLocation transferBufferVerticesLocation = {};
-    transferBufferVerticesLocation.transfer_buffer = app->transferBuffer;
-    transferBufferVerticesLocation.offset = 0;
-
-    SDL_GPUTransferBufferLocation transferBufferIndicesLocation = {};
-    transferBufferIndicesLocation.transfer_buffer = app->transferBuffer;
-    transferBufferIndicesLocation.offset = app->testMesh.verticesArraySize;
-
-    SDL_GPUBufferRegion vertexBufferRegion = {};
-    vertexBufferRegion.buffer = app->vertexBuffer;
-    vertexBufferRegion.offset = 0;
-    vertexBufferRegion.size = app->testMesh.verticesArraySize;
-
-    SDL_GPUBufferRegion indexBufferRegion = {};
-    indexBufferRegion.buffer = app->indexBuffer;
-    indexBufferRegion.offset = 0;
-    indexBufferRegion.size = app->testMesh.indicesArraySize;
-
-    SDL_UploadToGPUBuffer(copyPass, &transferBufferVerticesLocation, &vertexBufferRegion, false);
-    SDL_UploadToGPUBuffer(copyPass, &transferBufferIndicesLocation, &indexBufferRegion, false);
+    SDL_UploadToGPUBuffer(
+        copyPass,
+        &(SDL_GPUTransferBufferLocation){
+            .transfer_buffer = app->transferBuffer,
+            .offset = 0
+        },
+        &(SDL_GPUBufferRegion){
+            .buffer = app->vertexBuffer,
+            .offset = 0,
+            .size = app->testMesh.verticesArraySize
+        },
+        false
+    );
+    SDL_UploadToGPUBuffer(
+        copyPass,
+        &(SDL_GPUTransferBufferLocation){
+            .transfer_buffer = app->transferBuffer,
+            .offset = app->testMesh.verticesArraySize
+        },
+        &(SDL_GPUBufferRegion){
+            .buffer = app->indexBuffer,
+            .offset = 0,
+            .size = app->testMesh.indicesArraySize
+        },
+        false
+    );
 
     SDL_EndGPUCopyPass(copyPass);
 
@@ -310,18 +316,29 @@ SDL_AppResult application_onRender(Application *app) {
 
     SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, NULL);
     SDL_BindGPUGraphicsPipeline(renderPass, app->graphicsPipeline);
-
-    SDL_GPUBufferBinding vertexBufferBindings[1]; SDL_zeroa(vertexBufferBindings);
-    vertexBufferBindings[0].buffer = app->vertexBuffer;
-    vertexBufferBindings[0].offset = 0;
-
-    SDL_BindGPUVertexBuffers(renderPass, 0, vertexBufferBindings, sizeof(vertexBufferBindings) / sizeof(SDL_GPUBufferBinding));
+    SDL_BindGPUVertexBuffers(
+        renderPass, 0,
+        (SDL_GPUBufferBinding []){
+            {
+                .buffer = app->vertexBuffer,
+                .offset = 0
+            }
+        },
+        1
+    );
 
     SDL_GPUBufferBinding indexBufferBinding = {};
     indexBufferBinding.buffer = app->indexBuffer;
     indexBufferBinding.offset = 0;
 
-    SDL_BindGPUIndexBuffer(renderPass, &indexBufferBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+    SDL_BindGPUIndexBuffer(
+        renderPass,
+        &(SDL_GPUBufferBinding){
+            .buffer = app->indexBuffer,
+            .offset = 0
+        },
+        SDL_GPU_INDEXELEMENTSIZE_32BIT
+    );
 
     BasicUBO ubo; SDL_zero(ubo);
     ubo.model = app->testMesh_modelMatrix;
