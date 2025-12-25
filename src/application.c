@@ -308,13 +308,13 @@ SDL_AppResult application_onRender(Application *app) {
 
     SDL_EndGPUCopyPass(copyPass);
 
-    SDL_GPUColorTargetInfo colorTargetInfo = {};
-    colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-    colorTargetInfo.clear_color = (SDL_FColor){0.125f, 0.125f, 0.25f, 1.0f};
-    colorTargetInfo.texture = windowTexture;
+    SDL_GPUColorTargetInfo colorTargetInfos[1]; SDL_zeroa(colorTargetInfos);
+    colorTargetInfos[0].load_op = SDL_GPU_LOADOP_CLEAR;
+    colorTargetInfos[0].store_op = SDL_GPU_STOREOP_STORE;
+    colorTargetInfos[0].clear_color = (SDL_FColor){0.125f, 0.125f, 0.25f, 1.0f};
+    colorTargetInfos[0].texture = windowTexture;
 
-    SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, NULL);
+    SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, colorTargetInfos, SDL_arraysize(colorTargetInfos), NULL);
     SDL_BindGPUGraphicsPipeline(renderPass, app->graphicsPipeline);
     SDL_BindGPUVertexBuffers(
         renderPass, 0,
