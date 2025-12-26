@@ -327,10 +327,6 @@ SDL_AppResult application_onRender(Application *app) {
         1
     );
 
-    SDL_GPUBufferBinding indexBufferBinding = {};
-    indexBufferBinding.buffer = app->indexBuffer;
-    indexBufferBinding.offset = 0;
-
     SDL_BindGPUIndexBuffer(
         renderPass,
         &(SDL_GPUBufferBinding){
