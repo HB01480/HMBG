@@ -35,6 +35,6 @@ void *SDLext_LoadStorageFile(usize *outBufferSize, SDL_Storage *storage, const c
         return NULL;
     }
 
-    if (!outBufferSize) *outBufferSize = bufferSize;
+    if (outBufferSize) *outBufferSize = bufferSize;
     return buffer;
 }
