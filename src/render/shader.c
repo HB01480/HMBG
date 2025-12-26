@@ -5,19 +5,9 @@ SDL_GPUShader *createGPUShaderFromFilepath(SDL_GPUDevice *gpu, SDL_Storage *stor
     void *fileContent = NULL;
     usize fileSize = 0;
 
-    if (!SDL_GetStorageFileSize(storage, filepath, &fileSize)) {
-        SDL_Log("Can't get the file size of shader code. File path of '%s'", filepath);
-        return NULL;
-    }
-
-    fileContent = SDL_malloc(fileSize);
+    fileContent = SDLext_LoadStorageFile(&fileSize, storage, filepath);
     if (!fileContent) {
-        SDL_Log("Failed to allocate memory for shader code. File path of '%s'", filepath);
-        return NULL;
-    }
-
-    if (!SDL_ReadStorageFile(storage, filepath, fileContent, fileSize)) {
-        SDL_Log("Can't read file. File path of '%s'", filepath);
+        SDL_Log("Failed to load shader from '%s' filepath: %s", filepath, SDL_GetError());
         return NULL;
     }
 
