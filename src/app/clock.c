@@ -6,6 +6,7 @@ Clock clock_init() {
     clock.dt = 0.0f;
     clock.last = 0ull;
 
+    clock_tick(&clock);
     return clock;
 }
 
