@@ -2,14 +2,6 @@
 
 layout (location = 0) out vec4 outColor;
 
-layout (std140, set = 3, binding = 0) uniform BasicUBO {
-    mat4 model;
-    mat4 view;
-    mat4 projection;
-
-    float timeSeconds;
-};
-
 
 void main() {
     outColor = vec4(0.875f, 0.875f, 0.25f, 1.0f);
