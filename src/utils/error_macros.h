@@ -6,3 +6,9 @@ if ((errorCondition)){\
     SDL_Log("%s: %s", errorText, SDL_GetError());\
     goto handleErrorLabel;\
 }
+
+#define HANDLE_ERROR(errorCondition, errorText, handleErrorLabel)\
+if ((errorCondition)){\
+    SDL_Log("%s", errorText);\
+    goto handleErrorLabel;\
+}
