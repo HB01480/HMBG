@@ -37,9 +37,9 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
 
     {
         const RenderVertex vertices[] = {
-            {.position = {-0.5f,  0.5f, 0.0f}, .texCoord = {0.0f, 0.0f}}, // tl
-            {.position = { 0.5f,  0.5f, 0.0f}, .texCoord = {1.0f, 0.0f}}, // tr
-            {.position = { 0.5f, -0.5f, 0.0f}, .texCoord = {1.0f, 1.0f}}, // br
+            {.position = {-0.5f,  0.5f, 0.0f}, .texCoord = {0.0f, 1.0f}}, // tl
+            {.position = { 0.5f,  0.5f, 0.0f}, .texCoord = {1.0f, 1.0f}}, // tr
+            {.position = { 0.5f, -0.5f, 0.0f}, .texCoord = {1.0f, 0.0f}}, // br
             {.position = {-0.5f, -0.5f, 0.0f}, .texCoord = {0.0f, 0.0f}}  // bl
         };
         const u32 indices[] = {
