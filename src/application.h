@@ -1,12 +1,8 @@
 #pragma once
 #include "common.h"
-
 #include "app/clock.h"
-#include "app/appState.h"
-#include "app/as_titleMenu.h"
-#include "app/as_game.h"
-#include "app/mouseState.h"
 #include "app/keyState.h"
+#include "app/mouseState.h"
 
 #include "render/vertex.h"
 #include "render/mesh.h"
@@ -15,43 +11,34 @@
 
 
 typedef struct Application {
+    SDL_Window *window;
+    SDL_GPUDevice *gpu;
+    Clock clock;
     bool debug;
 
-    SDL_Window *window;
-    Clock clock;
-
-    MouseState mouseState;
     KeyState keyState;
+    MouseState mouseState;
 
-    AS_TitleMenu asTitleMenu;
-    AS_Game asGame;
-
-    AppStateID currentAS;
-    AppStateID nextAS;
-
-    RenderCamera camera;
     RenderMesh testMesh;
     mat4s testMesh_modelMatrix;
+    RenderCamera renderCamera;
 
-    SDL_GPUDevice *gpu;
+    SDL_GPUGraphicsPipeline *graphicsPipeline;
     SDL_GPUBuffer *vertexBuffer;
     SDL_GPUBuffer *indexBuffer;
     SDL_GPUTransferBuffer *transferBuffer;
-    SDL_GPUTransferBuffer *textureTransferBuffer;
-    SDL_GPUGraphicsPipeline *graphicsPipeline;
 
 } Application;
 
 
-Application application_init(SDL_AppResult *outResult, int argumentCount, char *arguments[]);
+SDL_AppResult application_init(Application *outApp, int argumentCount, char *arguments[]);
 void application_free(Application *app);
 
 SDL_AppResult application_onUpdate(Application *app);
 SDL_AppResult application_onRender(Application *app);
 SDL_AppResult application_onEvent(Application *app, SDL_Event *event);
 
-void application_enableRelativeMouseMode(Application *app);
-void application_disableRelativeMouseMode(Application *app);
+void application_enableRelativeModeMousing(Application *app);
+void application_disableRelativeModeMousing(Application *app);
 
-// if application was a class, then this function would be static
 mat4s calculatePerspectiveMatrixFromWindow(SDL_Window *window);

@@ -10,18 +10,14 @@ typedef struct Program {
 } Program;
 
 SDL_AppResult SDLCALL SDL_AppInit(void **appstate, int argc, char *argv[]) {
-    SDL_AppResult appResult = SDL_APP_CONTINUE;
-
     Program *program = SDL_malloc(sizeof(Program));
     if (!program) {
         SDL_Log("Failed to allocate memory for the program:\n%s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
+
     *appstate = program;
-
-    program->app = application_init(&appResult, argc, argv);
-
-    return appResult;
+    return application_init(&program->app, argc, argv);
 }
 
 SDL_AppResult SDLCALL SDL_AppIterate(void *appstate) {

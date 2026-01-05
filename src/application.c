@@ -1,320 +1,294 @@
 #include "application.h"
 
-#include "app/appStateEvents.h"
 
-#include "render/shader.h"
+static bool isApplicationConstructed = false;
 
+SDL_AppResult application_init(Application *outApp, int argumentCount, char *arguments[]) {
+    HANDLE_ERROR(isApplicationConstructed, "The application was already successfully constructed", handleAppFailure);
+    HANDLE_ERROR(!outApp, "Parameter 'outApp' is NULL", handleAppFailure)
 
-SDL_AppResult application_initSDL();
-void application_quitSDL();
+    Application *app = SDL_malloc(sizeof(Application));
+    HANDLE_ERROR(!app, "Failed to allocate memory for the application", handleAppFailure)
+    SDL_zerop(app);
 
-
-Application application_init(SDL_AppResult *outResult, int argumentCount, char *arguments[]) {
-    Application app; SDL_zero(app);
-
-    app.debug = false;
+    app->debug = false;
     if (argumentCount > 1) {
-        if (SDL_strcmp(arguments[1], "debug") == 0) {
-            app.debug = true;
+        if (SDL_strcmp(arguments[1], "debug")) {
+            app->debug = true;
         }
     }
 
-    const char *appTitle = "Highly Moddable Block Game";
-    const s32 appWidth = 1024;
-    const s32 appHeight = 512;
-
-    SDL_SetAppMetadata(appTitle, NULL, "com.hb01480.hmbg");
-    application_initSDL();
-
     SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN;
-    app.window = SDL_CreateWindow(appTitle, appWidth, appHeight, windowFlags);
-    if (!app.window) {
-        SDL_Log("Failed to create window:\n%s", SDL_GetError());
-        *outResult = SDL_APP_FAILURE;
+    app->window = SDL_CreateWindow("Highly Moddable Block Game", 1024, 512, windowFlags);
+    if (!app->window) {
+        SDL_Log("Failed to construct the window: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
     }
-    app.clock = (Clock){};
+    HANDLE_SDL_ERROR(!app->window, "Failed to construct the window", handleAppFailure);
 
-    application_enableRelativeMouseMode(&app);
+    app->gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, app->debug, NULL);
+    HANDLE_SDL_ERROR(!app->gpu, "Failed to construct the gpu device", handleAppFailure);
+    HANDLE_SDL_ERROR(!SDL_ClaimWindowForGPUDevice(app->gpu, app->window), "Failed to claim the window for the gpu device", handleAppFailure);
 
-    SDL_zero(app.mouseState);
-    // Since it's a pointer to a internal SDL array,
-    // it gets automatically updated after all SDL events are processed.
-    app.keyState = SDL_GetKeyboardState(NULL);
+    app->clock = clock_init();
 
-    app.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, app.debug, NULL);
-    if (!app.gpu) {
-        SDL_Log("Failed to create GPU Device:\n%s", SDL_GetError());
-        *outResult = SDL_APP_FAILURE;
-    }
-
-    if (!SDL_ClaimWindowForGPUDevice(app.gpu, app.window)) {
-        SDL_Log("Failed to claim the application's window for the its gpu device:\n%s", SDL_GetError());
-        *outResult = SDL_APP_FAILURE;
-    }
-
-    SDL_Log("--------Application-Information-----------");
-    SDL_Log("Platform: %s", SDL_GetPlatform());
-    SDL_Log("GPU Backend: %s", SDL_GetGPUDeviceDriver(app.gpu));
-    SDL_Log("SDL Version: %i.%i.%i", SDL_VERSIONNUM_MAJOR(SDL_GetVersion()), SDL_VERSIONNUM_MINOR(SDL_GetVersion()), SDL_VERSIONNUM_MICRO(SDL_GetVersion())); 
-    SDL_Log("------------------------------------------");
-
-    app.asTitleMenu = asTitleMenu_init(outResult, &app);
-    app.asGame = asGame_init(outResult, &app);
-
-    app.currentAS = AS_TITLE_MENU;
-    app.nextAS = AS_NULL;
-
-    if (app.currentAS == AS_TITLE_MENU) *outResult = asTitleMenu_onEnter(&app.asTitleMenu, &app);
-    if (app.currentAS == AS_GAME) *outResult = asGame_onEnter(&app.asGame, &app);
+    app->keyState = SDL_GetKeyboardState(NULL);
+    app->mouseState = mouseState_init();
 
     {
         const RenderVertex vertices[] = {
-            {{ 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f}},
-            {{ 0.5f, -0.5f,  0.0f}, {1.0f, 0.0f}},
-            {{-0.5f, -0.5f,  0.0f}, {0.0f, 0.0f}},
-            {{-0.5f,  0.5f,  0.0f}, {0.0f, 1.0f}}
+            {.position = {-0.5f,  0.5f, 0.0f}, .texCoord = {0.0f, 0.0f}}, // tl
+            {.position = { 0.5f,  0.5f, 0.0f}, .texCoord = {1.0f, 0.0f}}, // tr
+            {.position = { 0.5f, -0.5f, 0.0f}, .texCoord = {1.0f, 1.0f}}, // br
+            {.position = {-0.5f, -0.5f, 0.0f}, .texCoord = {0.0f, 0.0f}}  // bl
         };
         const u32 indices[] = {
             0, 1, 2,
             0, 2, 3
         };
 
-        app.testMesh = renderMesh_init(vertices, sizeof(vertices), indices, sizeof(indices));
+        app->testMesh = renderMesh_init(vertices, sizeof(vertices), indices, sizeof(indices));
     }
 
-    app.vertexBuffer = SDL_CreateGPUBuffer(app.gpu, &(SDL_GPUBufferCreateInfo){
-        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-        .size = app.testMesh.verticesArraySize,
-        .props = 0
-    });
-
-    app.indexBuffer = SDL_CreateGPUBuffer(app.gpu, &(SDL_GPUBufferCreateInfo){
-        .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-        .size = app.testMesh.indicesArraySize,
-        .props = 0
-    });
-
-    app.transferBuffer = SDL_CreateGPUTransferBuffer(app.gpu, &(SDL_GPUTransferBufferCreateInfo){
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = app.testMesh.verticesArraySize + app.testMesh.indicesArraySize,
-        .props = 0
-    });
-
-    app.textureTransferBuffer = SDL_CreateGPUTransferBuffer(app.gpu, &(SDL_GPUTransferBufferCreateInfo){
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = app.testMesh.verticesArraySize + app.testMesh.indicesArraySize,
-        .props = 0
-    });
-
-    void *mappedTransferBuffer = SDL_MapGPUTransferBuffer(app.gpu, app.transferBuffer, false);
-    RenderVertex *verticesLocation = mappedTransferBuffer;
-    u32 *indicesLocation = mappedTransferBuffer + app.testMesh.verticesArraySize;
-
-    SDL_memcpy(verticesLocation, (void *)app.testMesh.vertices, app.testMesh.verticesArraySize);
-    SDL_memcpy(indicesLocation, (void *)app.testMesh.indices, app.testMesh.indicesArraySize);
-
-    SDL_UnmapGPUTransferBuffer(app.gpu, app.transferBuffer);
-
-    SDL_Storage *gameStorage = SDL_OpenTitleStorage(NULL, 0);
-    if (!gameStorage) {
-        SDL_Log("Failed to open storage for game data:\n%s", SDL_GetError());
-        *outResult = SDL_APP_FAILURE;
-    }
-    while (!SDL_StorageReady(gameStorage)) {
-        SDL_Log("Waiting for game storage to be ready");
-        SDL_Delay(1);
-    }
-
-    SDL_GPUShader *vertexShader = createGPUVertexShaderFromFilepath(
-        app.gpu,
-        gameStorage,
-        "res/shaders/basic.vert.spv",
-        SDL_GPU_SHADERFORMAT_SPIRV,
-        0, 0, 0, 1
-    );
-
-    SDL_GPUShader *fragmentShader = createGPUFragmentShaderFromFilepath(
-        app.gpu,
-        gameStorage,
-        "res/shaders/basic.frag.spv",
-        SDL_GPU_SHADERFORMAT_SPIRV,
-        0, 0, 0, 1
-    );
-
-    SDL_CloseStorage(gameStorage);
-
-    app.graphicsPipeline = SDL_CreateGPUGraphicsPipeline(app.gpu, &(SDL_GPUGraphicsPipelineCreateInfo){
-        .vertex_shader = vertexShader,
-        .fragment_shader = fragmentShader,
-        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-
-        .vertex_input_state = {
-            .num_vertex_buffers = 1,
-            .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription []){
-                {
-                    .slot = 0,
-                    .pitch = sizeof(RenderVertex),
-                    .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
-                    .instance_step_rate = 0
-                }
-            },
-
-            .num_vertex_attributes = 1,
-            .vertex_attributes = (SDL_GPUVertexAttribute []){
-                {
-                    .buffer_slot = 0,
-                    .location = 0,
-                    .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-                    .offset = offsetof(RenderVertex, position)
-                }
-            }
-        },
-
-        .target_info = {
-            .num_color_targets = 1,
-            .color_target_descriptions = (SDL_GPUColorTargetDescription []){
-                {
-                    .blend_state.enable_blend = true,
-                    .blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD,
-                    .blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-                    .blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-                    .blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-                    .blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-                    .blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-                    .format = SDL_GetGPUSwapchainTextureFormat(app.gpu, app.window)
-                }
-            }
-        }
-    });
-
-    SDL_ReleaseGPUShader(app.gpu, vertexShader);
-    SDL_ReleaseGPUShader(app.gpu, fragmentShader);
-
-    app.camera = renderCamera_init(
-        (vec3s){{0.0f, 0.0f, 0.0f}},
-        (vec3s){{0.0f, 1.0f, 0.0f}},
+    app->testMesh_modelMatrix = glms_translate_make(glms_vec3_make((f32 []){ 0.0f,  0.0f, -1.0f}));
+    app->renderCamera = renderCamera_init(
+        glms_vec3_make((f32 []){ 0.0f,  0.0f,  0.0f}),
+        glms_vec3_make((f32 []){ 0.0f,  1.0f,  0.0f}),
         0.0f, 0.0f,
         5.0f, 2.5f
     );
 
-    app.testMesh_modelMatrix = glms_translate_make(glms_vec3_make((f32 []){0.0f, 0.0f, -1.0f}));
+    app->vertexBuffer = SDL_CreateGPUBuffer(app->gpu, &(SDL_GPUBufferCreateInfo){
+        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+        .size = app->testMesh.verticesArraySize,
+        .props = 0
+    });
+    HANDLE_SDL_ERROR(!app->vertexBuffer, "Failed to construct the vertex buffer", handleAppFailure)
 
-    SDL_ShowWindow(app.window);
+    app->indexBuffer = SDL_CreateGPUBuffer(app->gpu, &(SDL_GPUBufferCreateInfo){
+        .usage = SDL_GPU_BUFFERUSAGE_INDEX,
+        .size = app->testMesh.indicesArraySize,
+        .props = 0
+    });
+    HANDLE_SDL_ERROR(!app->indexBuffer, "Failed to construct the index buffer", handleAppFailure)
 
-    return app;
+    app->transferBuffer = SDL_CreateGPUTransferBuffer(app->gpu, &(SDL_GPUTransferBufferCreateInfo){
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = app->testMesh.verticesArraySize + app->testMesh.indicesArraySize,
+        .props = 0
+    });
+    HANDLE_SDL_ERROR(!app->transferBuffer, "Failed to construct the transfer buffer", handleAppFailure)
+
+    SDL_Storage *contentStorage = SDL_OpenTitleStorage(NULL, 0);
+    HANDLE_SDL_ERROR(!contentStorage, "Failed to open content storage", handleAppFailure)
+
+    while (!SDL_StorageReady(contentStorage)) {
+        SDL_Log("Waiting for content storage to be ready");
+        SDL_Delay(1);
+    }
+
+    {
+        void *transferBufferPtr = SDL_MapGPUTransferBuffer(app->gpu, app->transferBuffer, false);
+        void *verticesPtr = transferBufferPtr;
+        void *indicesPtr = transferBufferPtr + app->testMesh.verticesArraySize;
+
+        SDL_memcpy(verticesPtr, app->testMesh.vertices, app->testMesh.verticesArraySize);
+        SDL_memcpy(indicesPtr, app->testMesh.indices, app->testMesh.indicesArraySize);
+
+        SDL_UnmapGPUTransferBuffer(app->gpu, transferBufferPtr);
+    }
+
+    {
+        const char *vertexShaderPath = "res/shaders/basic.vert.spv";
+        const char *fragmentShaderPath = "res/shaders/basic.frag.spv";
+        usize vertexShaderCodeSize = 0, fragmentShaderCodeSize = 0;
+        void *vertexShaderCode = NULL;
+        void *fragmentShaderCode = NULL;
+
+        vertexShaderCode = SDLext_LoadStorageFile(&vertexShaderCodeSize, contentStorage, vertexShaderPath);
+        HANDLE_SDL_ERROR(!vertexShaderCode, "Failed to load vertex shader code from content storage", handleAppFailure)
+
+        fragmentShaderCode = SDLext_LoadStorageFile(&fragmentShaderCodeSize, contentStorage, fragmentShaderPath);
+        HANDLE_SDL_ERROR(!fragmentShaderCode, "Failed to load fragment shader code from content storage", handleAppFailure)
+
+        SDL_GPUShader *vertexShader = SDL_CreateGPUShader(app->gpu, &(SDL_GPUShaderCreateInfo){
+            .code = vertexShaderCode,
+            .code_size = vertexShaderCodeSize,
+            .entrypoint = "main",
+            .format = SDL_GPU_SHADERFORMAT_SPIRV,
+            .stage = SDL_GPU_SHADERSTAGE_VERTEX,
+            .num_samplers = 0,
+            .num_storage_buffers = 0,
+            .num_storage_textures = 0,
+            .num_uniform_buffers = 1,
+            .props = 0
+        });
+        HANDLE_SDL_ERROR(!vertexShader, "Failed to construct a vertex shader", handleAppFailure)
+
+        SDL_GPUShader *fragmentShader = SDL_CreateGPUShader(app->gpu, &(SDL_GPUShaderCreateInfo){
+            .code = fragmentShaderCode,
+            .code_size = fragmentShaderCodeSize,
+            .entrypoint = "main",
+            .format = SDL_GPU_SHADERFORMAT_SPIRV,
+            .stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
+            .num_samplers = 0,
+            .num_storage_buffers = 0,
+            .num_storage_textures = 0,
+            .num_uniform_buffers = 0,
+            .props = 0
+        });
+        HANDLE_SDL_ERROR(!fragmentShader, "Failed to construct a fragment shader", handleAppFailure)
+
+        SDL_free(vertexShaderCode);
+        SDL_free(fragmentShaderCode);
+
+        app->graphicsPipeline = SDL_CreateGPUGraphicsPipeline(app->gpu, &(SDL_GPUGraphicsPipelineCreateInfo){
+            .vertex_shader = vertexShader,
+            .fragment_shader = fragmentShader,
+            .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+
+            .target_info = {
+                .has_depth_stencil_target = false,
+                .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_INVALID,
+                .num_color_targets = 1,
+                .color_target_descriptions = (SDL_GPUColorTargetDescription []){
+                    {
+                        .blend_state = {
+                            .enable_blend = true,
+                            .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+                            .color_blend_op = SDL_GPU_BLENDOP_ADD,
+                            .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+                            .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+                            .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                            .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA
+                        },
+                        .format = SDL_GetGPUSwapchainTextureFormat(app->gpu, app->window)
+                    }
+                }
+            },
+            .vertex_input_state = {
+                .num_vertex_buffers = 1,
+                .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription []){
+                    {
+                        .slot = 0,
+                        .instance_step_rate = 1,
+                        .pitch = sizeof(RenderVertex),
+                        .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX
+                    }
+                },
+                .num_vertex_attributes = 1,
+                .vertex_attributes = (SDL_GPUVertexAttribute []){
+                    {
+                        .buffer_slot = 0,
+                        .location = 0,
+                        .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+                        .offset = 0,
+                    }
+                }
+            },
+
+            .depth_stencil_state = {},
+            .multisample_state = {},
+            .rasterizer_state = {},
+
+            .props = 0
+        });
+        HANDLE_SDL_ERROR(!app->graphicsPipeline, "Failed to construct the graphics pipeline", handleAppFailure)
+
+        SDL_ReleaseGPUShader(app->gpu, vertexShader);
+        SDL_ReleaseGPUShader(app->gpu, fragmentShader);
+    }
+
+    application_enableRelativeModeMousing(app);
+
+    SDL_ShowWindow(app->window);
+    *outApp = *app;
+    isApplicationConstructed = true;
+    return SDL_APP_CONTINUE;
+
+    handleAppFailure:
+    return SDL_APP_FAILURE;
 }
 
 void application_free(Application *app) {
-    if (app->currentAS == AS_TITLE_MENU) asTitleMenu_onExit(&app->asTitleMenu, app);
-    if (app->currentAS == AS_GAME) asGame_onExit(&app->asGame, app);
-
-    application_disableRelativeMouseMode(app);
-
-    asGame_free(&app->asGame);
-    asTitleMenu_free(&app->asTitleMenu);
+    application_disableRelativeModeMousing(app);
 
     renderMesh_free(&app->testMesh);
 
+    SDL_ReleaseGPUBuffer(app->gpu, app->vertexBuffer);
+    SDL_ReleaseGPUBuffer(app->gpu, app->indexBuffer);
+    SDL_ReleaseGPUTransferBuffer(app->gpu, app->transferBuffer);
     SDL_ReleaseGPUGraphicsPipeline(app->gpu, app->graphicsPipeline);
 
-    SDL_ReleaseGPUTransferBuffer(app->gpu, app->transferBuffer);
-    SDL_ReleaseGPUTransferBuffer(app->gpu, app->textureTransferBuffer);
-    SDL_ReleaseGPUBuffer(app->gpu, app->indexBuffer);
-    SDL_ReleaseGPUBuffer(app->gpu, app->vertexBuffer);
-
     SDL_DestroyGPUDevice(app->gpu);
-
     SDL_DestroyWindow(app->window);
 
-    application_quitSDL();
+    SDL_free(app);
+    isApplicationConstructed = false;
 }
 
 SDL_AppResult application_onUpdate(Application *app) {
-    SDL_AppResult appResult = SDL_APP_CONTINUE;
+    if (app->keyState[SDL_SCANCODE_W]) renderCamera_moveForward(&app->renderCamera, app->clock.dt);
+    if (app->keyState[SDL_SCANCODE_S]) renderCamera_moveBackward(&app->renderCamera, app->clock.dt);
+    if (app->keyState[SDL_SCANCODE_A]) renderCamera_moveLeftward(&app->renderCamera, app->clock.dt);
+    if (app->keyState[SDL_SCANCODE_D]) renderCamera_moveRightward(&app->renderCamera, app->clock.dt);
 
-    if (app->currentAS == AS_TITLE_MENU) asTitleMenu_onUpdate(&app->asTitleMenu, app);
-    if (app->currentAS == AS_GAME) asGame_onUpdate(&app->asGame, app);
-    
-    if (app->nextAS != AS_NULL) {
-        if (app->currentAS == AS_TITLE_MENU) asTitleMenu_onExit(&app->asTitleMenu, app);
-        if (app->currentAS == AS_GAME) asGame_onExit(&app->asGame, app);
-        if (app->nextAS == AS_TITLE_MENU) asTitleMenu_onEnter(&app->asTitleMenu, app);
-        if (app->nextAS == AS_GAME) asGame_onEnter(&app->asGame, app);
+    SDL_Log("%f, %f", app->renderCamera.position.x, app->renderCamera.position.y);
 
-        app->currentAS = app->nextAS;
-        app->nextAS = AS_NULL;
-    }
-
-    if (app->keyState[SDL_SCANCODE_W])
-        renderCamera_moveForward(&app->camera, app->clock.dt);
-    if (app->keyState[SDL_SCANCODE_S])
-        renderCamera_moveBackward(&app->camera, app->clock.dt);
-    if (app->keyState[SDL_SCANCODE_A])
-        renderCamera_moveLeftward(&app->camera, app->clock.dt);
-    if (app->keyState[SDL_SCANCODE_D])
-        renderCamera_moveRightward(&app->camera, app->clock.dt);
-
+    mouseState_update(&app->mouseState);
     clock_tick(&app->clock);
-    return appResult;
+    return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult application_onRender(Application *app) {
-    SDL_AppResult appResult = SDL_APP_CONTINUE;
-
-    if (app->currentAS == AS_TITLE_MENU) asTitleMenu_onRender(&app->asTitleMenu, app);
-    if (app->currentAS == AS_GAME) asGame_onRender(&app->asGame, app);
-
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(app->gpu);
 
-    u32 windowWidth = 0, windowHeight = 0;
     SDL_GPUTexture *windowTexture = NULL;
+    u32 windowWidth = 0, windowHeight = 0;
     if (!SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer, app->window, &windowTexture, &windowWidth, &windowHeight)) {
-        SDL_Log("Failed to acquire swapchain texture from the window:\n%s", SDL_GetError());
-        appResult = SDL_APP_FAILURE;
+        SDL_Log("Failed to acquire gpu swapchain texture: %s", SDL_GetError());
+        SDL_SubmitGPUCommandBuffer(commandBuffer);
+        return SDL_APP_FAILURE;
     }
 
     if (!windowTexture) {
-        goto render_cleanup;
+        goto renderCleanUp;
     }
+
+    SDL_GPUColorTargetInfo colorTargetInfos[1]; SDL_zeroa(colorTargetInfos);
+    colorTargetInfos[0].texture = windowTexture;
+    colorTargetInfos[0].clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 1.0f};
+    colorTargetInfos[0].load_op = SDL_GPU_LOADOP_CLEAR;
+    colorTargetInfos[0].store_op = SDL_GPU_STOREOP_STORE; 
 
     SDL_GPUCopyPass *copyPass = SDL_BeginGPUCopyPass(commandBuffer);
 
     SDL_UploadToGPUBuffer(
-        copyPass,
-        &(SDL_GPUTransferBufferLocation){
+        copyPass, &(SDL_GPUTransferBufferLocation){
             .transfer_buffer = app->transferBuffer,
             .offset = 0
         },
         &(SDL_GPUBufferRegion){
             .buffer = app->vertexBuffer,
-            .offset = 0,
-            .size = app->testMesh.verticesArraySize
-        },
-        false
+            .size = app->testMesh.verticesArraySize,
+            .offset = 0
+        }, false
     );
     SDL_UploadToGPUBuffer(
-        copyPass,
-        &(SDL_GPUTransferBufferLocation){
+        copyPass, &(SDL_GPUTransferBufferLocation){
             .transfer_buffer = app->transferBuffer,
             .offset = app->testMesh.verticesArraySize
         },
         &(SDL_GPUBufferRegion){
             .buffer = app->indexBuffer,
-            .offset = 0,
-            .size = app->testMesh.indicesArraySize
-        },
-        false
+            .size = app->testMesh.indicesArraySize,
+            .offset = 0
+        }, false
     );
 
     SDL_EndGPUCopyPass(copyPass);
-
-    SDL_GPUColorTargetInfo colorTargetInfos[1]; SDL_zeroa(colorTargetInfos);
-    colorTargetInfos[0].load_op = SDL_GPU_LOADOP_CLEAR;
-    colorTargetInfos[0].store_op = SDL_GPU_STOREOP_STORE;
-    colorTargetInfos[0].clear_color = (SDL_FColor){0.125f, 0.125f, 0.25f, 1.0f};
-    colorTargetInfos[0].texture = windowTexture;
-
     SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, colorTargetInfos, SDL_arraysize(colorTargetInfos), NULL);
+
     SDL_BindGPUGraphicsPipeline(renderPass, app->graphicsPipeline);
     SDL_BindGPUVertexBuffers(
         renderPass, 0,
@@ -323,8 +297,7 @@ SDL_AppResult application_onRender(Application *app) {
                 .buffer = app->vertexBuffer,
                 .offset = 0
             }
-        },
-        1
+        }, 1
     );
 
     SDL_BindGPUIndexBuffer(
@@ -332,45 +305,34 @@ SDL_AppResult application_onRender(Application *app) {
         &(SDL_GPUBufferBinding){
             .buffer = app->indexBuffer,
             .offset = 0
-        },
-        SDL_GPU_INDEXELEMENTSIZE_32BIT
+        }, SDL_GPU_INDEXELEMENTSIZE_32BIT
     );
 
     BasicUBO ubo; SDL_zero(ubo);
     ubo.model = app->testMesh_modelMatrix;
-    ubo.view = renderCamera_calculateViewMatrix(&app->camera);
+    ubo.view = renderCamera_calculateViewMatrix(&app->renderCamera);
     ubo.projection = calculatePerspectiveMatrixFromWindow(app->window);
     ubo.timeSeconds = SDL_GetTicks() / 1000.0f;
 
     SDL_PushGPUVertexUniformData(commandBuffer, 0, &ubo, sizeof(ubo));
-    SDL_PushGPUFragmentUniformData(commandBuffer, 0, &ubo, sizeof(ubo));
 
-    SDL_DrawGPUIndexedPrimitives(renderPass, app->testMesh.indicesArraySize/sizeof(u32), 1, 0, 0, 0);
+    SDL_DrawGPUIndexedPrimitives(renderPass, app->testMesh.indicesArraySize / sizeof(u32), 1, 0, 0, 0);
 
     SDL_EndGPURenderPass(renderPass);
 
-    render_cleanup:
+    renderCleanUp:
     SDL_SubmitGPUCommandBuffer(commandBuffer);
-    return appResult;
+    return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
-    SDL_AppResult appResult = SDL_APP_CONTINUE;
-
     if (event->type == SDL_EVENT_QUIT) {
-        appResult = SDL_APP_SUCCESS;
+        return SDL_APP_SUCCESS;
     }
 
     if (event->type == SDL_EVENT_KEY_DOWN) {
         if (event->key.key == SDLK_ESCAPE) {
-            appResult = SDL_APP_SUCCESS;
-        }
-
-        if (event->key.key == SDLK_Z) {
-            sendAppStateEventSwitchState(AS_TITLE_MENU);
-        }
-        if (event->key.key == SDLK_X) {
-            sendAppStateEventSwitchState(AS_GAME);
+            return SDL_APP_SUCCESS;
         }
     }
 
@@ -379,52 +341,23 @@ SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
         delta.x = event->motion.xrel;
         delta.y = event->motion.yrel;
 
-        renderCamera_pan(&app->camera, delta, app->clock.dt);
+        renderCamera_pan(&app->renderCamera, delta, app->clock.dt);
     }
 
-    if (event->user.type == getAppStateEventCode()) {
-        if (event->user.code == APP_STATE_EVENT_CODE_SWITCH_STATE) {
-            app->nextAS = receiveAppStateEventSwitchState(event);
-        }
-    }
-
-    if (app->currentAS == AS_TITLE_MENU) asTitleMenu_onEvent(&app->asTitleMenu, event);
-    if (app->currentAS == AS_GAME) asGame_onEvent(&app->asGame, event);
-
-    return appResult;
+    return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult application_initSDL() {
-    SDL_AppResult appResult = SDL_APP_CONTINUE;
-
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        SDL_Log("Failed to init SDL3:\n%s", SDL_GetError());
-        appResult = SDL_APP_FAILURE;
-    }
-    if (!TTF_Init()) {
-        SDL_Log("Failed to init SDL3_ttf:\n%s", SDL_GetError());
-        appResult = SDL_APP_FAILURE;
-    }
-
-    return appResult;
-}
-
-void application_quitSDL() {
-    TTF_Quit();
-    SDL_Quit();
-}
-
-void application_enableRelativeMouseMode(Application *app) {
+void application_enableRelativeModeMousing(Application *app) {
     SDL_SetWindowRelativeMouseMode(app->window, true);
 }
 
-void application_disableRelativeMouseMode(Application *app) {
+void application_disableRelativeModeMousing(Application *app) {
     SDL_SetWindowRelativeMouseMode(app->window, false);
 }
 
 mat4s calculatePerspectiveMatrixFromWindow(SDL_Window *window) {
-    s32 width = 0, height = 0; SDL_GetWindowSizeInPixels(window, &width, &height);
-    f32 aspectRatio = (f32)width/(f32)height;
+    ivec2s size = glms_ivec2_zero(); SDL_GetWindowSizeInPixels(window, &size.x, &size.y);    
+    f32 aspectRatio = (f32)size.x/(f32)size.y;
 
-    return glms_perspective(45.0f, aspectRatio, 0.1f, 100.0f);
+    return glms_perspective(45.0f * DEGREES_TO_RADIANS, aspectRatio, 0.1f, 100.0f);
 }
