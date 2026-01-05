@@ -233,8 +233,6 @@ SDL_AppResult application_onUpdate(Application *app) {
     if (app->keyState[SDL_SCANCODE_A]) renderCamera_moveLeftward(&app->renderCamera, app->clock.dt);
     if (app->keyState[SDL_SCANCODE_D]) renderCamera_moveRightward(&app->renderCamera, app->clock.dt);
 
-    SDL_Log("%f, %f", app->renderCamera.position.x, app->renderCamera.position.y);
-
     mouseState_update(&app->mouseState);
     clock_tick(&app->clock);
     return SDL_APP_CONTINUE;
