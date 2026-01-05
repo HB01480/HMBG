@@ -8,3 +8,4 @@
 #include "utils/bool.h"
 #include "utils/SDLext.h"
 #include "utils/math.h"
+#include "utils/error_macros.h"
