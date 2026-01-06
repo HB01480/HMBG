@@ -7,7 +7,7 @@ MouseState mouseState_init() {
     state.leftClick = false;
     state.middleClick = false;
     state.rightClick = false;
-    
+
     return state;
 }
 

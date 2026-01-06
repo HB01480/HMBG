@@ -23,10 +23,16 @@ typedef struct Application {
     mat4s testMesh_modelMatrix;
     RenderCamera renderCamera;
 
+    SDL_Surface *testImage;
+    SDL_GPUTexture *testTexture;
+    SDL_GPUSampler *testTextureSampler;
+
     SDL_GPUGraphicsPipeline *graphicsPipeline;
     SDL_GPUBuffer *vertexBuffer;
     SDL_GPUBuffer *indexBuffer;
     SDL_GPUTransferBuffer *transferBuffer;
+    SDL_GPUTransferBuffer *textureTransferBuffer;
+    
 
 } Application;
 

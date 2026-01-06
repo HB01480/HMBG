@@ -3,6 +3,8 @@
 
 static bool isApplicationConstructed = false;
 
+SDL_Surface *application_loadImage(const char *filepath, SDL_Storage *storage);
+
 SDL_AppResult application_init(Application *outApp, int argumentCount, char *arguments[]) {
     HANDLE_ERROR(isApplicationConstructed, "The application was already successfully constructed", handleAppFailure);
     HANDLE_ERROR(!outApp, "Parameter 'outApp' is NULL", handleAppFailure)
@@ -35,12 +37,20 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
     app->keyState = SDL_GetKeyboardState(NULL);
     app->mouseState = mouseState_init();
 
+    SDL_Storage *contentStorage = SDL_OpenTitleStorage(NULL, 0);
+    HANDLE_SDL_ERROR(!contentStorage, "Failed to open content storage", handleAppFailure)
+
+    while (!SDL_StorageReady(contentStorage)) {
+        SDL_Log("Waiting for content storage to be ready");
+        SDL_Delay(1);
+    }
+
     {
         const RenderVertex vertices[] = {
-            {.position = {-0.5f,  0.5f, 0.0f}, .texCoord = {0.0f, 1.0f}}, // tl
-            {.position = { 0.5f,  0.5f, 0.0f}, .texCoord = {1.0f, 1.0f}}, // tr
-            {.position = { 0.5f, -0.5f, 0.0f}, .texCoord = {1.0f, 0.0f}}, // br
-            {.position = {-0.5f, -0.5f, 0.0f}, .texCoord = {0.0f, 0.0f}}  // bl
+            {.position = { 0.0f,  0.0f,  0.0f}, .texCoord = {1.0f, 1.0f}},
+            {.position = { 1.0f,  0.0f,  0.0f}, .texCoord = {0.0f, 1.0f}},
+            {.position = { 1.0f,  1.0f,  0.0f}, .texCoord = {0.0f, 0.0f}},
+            {.position = { 0.0f,  1.0f,  0.0f}, .texCoord = {1.0f, 0.0f}},
         };
         const u32 indices[] = {
             0, 1, 2,
@@ -50,7 +60,7 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
         app->testMesh = renderMesh_init(vertices, sizeof(vertices), indices, sizeof(indices));
     }
 
-    app->testMesh_modelMatrix = glms_translate_make(glms_vec3_make((f32 []){ 0.0f,  0.0f, -1.0f}));
+    app->testMesh_modelMatrix = glms_translate_make(glms_vec3_make((f32 []){ 0.0f,  0.0f,  1.0f}));
     app->renderCamera = renderCamera_init(
         glms_vec3_make((f32 []){ 0.0f,  0.0f,  0.0f}),
         glms_vec3_make((f32 []){ 0.0f,  1.0f,  0.0f}),
@@ -79,13 +89,18 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
     });
     HANDLE_SDL_ERROR(!app->transferBuffer, "Failed to construct the transfer buffer", handleAppFailure)
 
-    SDL_Storage *contentStorage = SDL_OpenTitleStorage(NULL, 0);
-    HANDLE_SDL_ERROR(!contentStorage, "Failed to open content storage", handleAppFailure)
+    app->testImage = application_loadImage("res/images/testImage.png", contentStorage);
+    HANDLE_SDL_ERROR(!app->testImage, "Failed to load the test image from disk", handleAppFailure)
+    app->testImage = SDL_ConvertSurface(app->testImage, SDL_PIXELFORMAT_RGBA32);
+    HANDLE_SDL_ERROR(!app->testImage, "Failed to convert the test image to RGBA32", handleAppFailure)
+    usize testImageSize = app->testImage->w * app->testImage->h * 4;
 
-    while (!SDL_StorageReady(contentStorage)) {
-        SDL_Log("Waiting for content storage to be ready");
-        SDL_Delay(1);
-    }
+    app->textureTransferBuffer = SDL_CreateGPUTransferBuffer(app->gpu, &(SDL_GPUTransferBufferCreateInfo){
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = testImageSize,
+        .props = 0
+    });
+    HANDLE_SDL_ERROR(!app->textureTransferBuffer, "Failed to construct the texture transfer buffer", handleAppFailure)
 
     {
         void *transferBufferPtr = SDL_MapGPUTransferBuffer(app->gpu, app->transferBuffer, false);
@@ -98,9 +113,49 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
         SDL_UnmapGPUTransferBuffer(app->gpu, transferBufferPtr);
     }
 
+    app->testTexture = SDL_CreateGPUTexture(app->gpu, &(SDL_GPUTextureCreateInfo){
+        .type = SDL_GPU_TEXTURETYPE_2D,
+        .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,
+        .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+        .width = app->testImage->w,
+        .height = app->testImage->h,
+        .layer_count_or_depth = 1,
+        .num_levels = 1,
+        .sample_count = 0,
+        .props = 0,
+    });
+    HANDLE_SDL_ERROR(!app->testTexture, "Failed to construct the test texture", handleAppFailure)
+
+    app->testTextureSampler = SDL_CreateGPUSampler(app->gpu, &(SDL_GPUSamplerCreateInfo){
+        .address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+        .address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+        .address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+        .mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+        .mag_filter = SDL_GPU_FILTER_NEAREST,
+        .min_filter = SDL_GPU_FILTER_NEAREST,
+        .enable_anisotropy = false,
+        .enable_compare = false,
+        .compare_op = SDL_GPU_COMPAREOP_INVALID,
+        .max_lod = 0.0f,
+        .max_anisotropy = 0.0f,
+        .min_lod = 0.0f,
+        .mip_lod_bias = 0.0f,
+        .props = 0
+    });
+    HANDLE_SDL_ERROR(!app->testTextureSampler, "Failed to construct the test texture sampler", handleAppFailure)
+
     {
-        const char *vertexShaderPath = "res/shaders/basic.vert.spv";
-        const char *fragmentShaderPath = "res/shaders/basic.frag.spv";
+        void *textureTransferBufferPtr = SDL_MapGPUTransferBuffer(app->gpu, app->textureTransferBuffer, false);
+        void *testTexturePtr = textureTransferBufferPtr;
+
+        SDL_memcpy(testTexturePtr, app->testImage->pixels, testImageSize);
+
+        SDL_UnmapGPUTransferBuffer(app->gpu, textureTransferBufferPtr);
+    }
+
+    {
+        const char *vertexShaderPath = "res/shaders/textured.vert.spv";
+        const char *fragmentShaderPath = "res/shaders/textured.frag.spv";
         usize vertexShaderCodeSize = 0, fragmentShaderCodeSize = 0;
         void *vertexShaderCode = NULL;
         void *fragmentShaderCode = NULL;
@@ -131,7 +186,7 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
             .entrypoint = "main",
             .format = SDL_GPU_SHADERFORMAT_SPIRV,
             .stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
-            .num_samplers = 0,
+            .num_samplers = 1,
             .num_storage_buffers = 0,
             .num_storage_textures = 0,
             .num_uniform_buffers = 0,
@@ -176,13 +231,19 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
                         .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX
                     }
                 },
-                .num_vertex_attributes = 1,
+                .num_vertex_attributes = 2,
                 .vertex_attributes = (SDL_GPUVertexAttribute []){
                     {
                         .buffer_slot = 0,
                         .location = 0,
                         .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-                        .offset = 0,
+                        .offset = offsetof(RenderVertex, position),
+                    },
+                    {
+                        .buffer_slot = 0,
+                        .location = 1,
+                        .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+                        .offset = offsetof(RenderVertex, texCoord),
                     }
                 }
             },
@@ -215,9 +276,14 @@ void application_free(Application *app) {
 
     renderMesh_free(&app->testMesh);
 
+    SDL_free(app->testImage);
+    SDL_ReleaseGPUTexture(app->gpu, app->testTexture);
+    SDL_ReleaseGPUSampler(app->gpu, app->testTextureSampler);
+
     SDL_ReleaseGPUBuffer(app->gpu, app->vertexBuffer);
     SDL_ReleaseGPUBuffer(app->gpu, app->indexBuffer);
     SDL_ReleaseGPUTransferBuffer(app->gpu, app->transferBuffer);
+    SDL_ReleaseGPUTransferBuffer(app->gpu, app->textureTransferBuffer);
     SDL_ReleaseGPUGraphicsPipeline(app->gpu, app->graphicsPipeline);
 
     SDL_DestroyGPUDevice(app->gpu);
@@ -283,6 +349,25 @@ SDL_AppResult application_onRender(Application *app) {
             .offset = 0
         }, false
     );
+    SDL_UploadToGPUTexture(
+        copyPass, &(SDL_GPUTextureTransferInfo){
+            .transfer_buffer = app->textureTransferBuffer,
+            .offset = 0,
+            .pixels_per_row = 0,
+            .rows_per_layer = 0
+        },
+        &(SDL_GPUTextureRegion){
+            .texture = app->testTexture,
+            .x = 0,
+            .y = 0,
+            .z = 0,
+            .w = app->testImage->w,
+            .h = app->testImage->h,
+            .d = 1,
+            .layer = 0,
+            .mip_level = 0
+        }, false
+    );
 
     SDL_EndGPUCopyPass(copyPass);
     SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, colorTargetInfos, SDL_arraysize(colorTargetInfos), NULL);
@@ -313,6 +398,16 @@ SDL_AppResult application_onRender(Application *app) {
     ubo.timeSeconds = SDL_GetTicks() / 1000.0f;
 
     SDL_PushGPUVertexUniformData(commandBuffer, 0, &ubo, sizeof(ubo));
+
+    SDL_BindGPUFragmentSamplers(
+        renderPass, 0,
+        (SDL_GPUTextureSamplerBinding []){
+            {
+                .texture = app->testTexture,
+                .sampler = app->testTextureSampler
+            }
+        }, 1
+    );
 
     SDL_DrawGPUIndexedPrimitives(renderPass, app->testMesh.indicesArraySize / sizeof(u32), 1, 0, 0, 0);
 
@@ -358,4 +453,20 @@ mat4s calculatePerspectiveMatrixFromWindow(SDL_Window *window) {
     f32 aspectRatio = (f32)size.x/(f32)size.y;
 
     return glms_perspective(45.0f * DEGREES_TO_RADIANS, aspectRatio, 0.1f, 100.0f);
+}
+
+SDL_Surface *application_loadImage(const char *filepath, SDL_Storage *storage) {
+    usize imageBufferSize = 0;
+    void *imageBuffer = SDLext_LoadStorageFile(&imageBufferSize, storage, filepath);
+    HANDLE_SDL_ERROR(!imageBuffer, "Failed to load the image from the provided storage", handleFailure)
+
+    SDL_IOStream *imageIO = SDL_IOFromMem(imageBuffer, imageBufferSize);
+    HANDLE_SDL_ERROR(!imageIO, "Failed to prepare the io stream around the image buffer", handleFailure)
+
+    SDL_Surface *image = IMG_Load_IO(imageIO, false);
+    HANDLE_SDL_ERROR(!image, "Failed to load the image from the image IO", handleFailure)
+    return image;
+
+    handleFailure:
+    return NULL;
 }
