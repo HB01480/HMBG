@@ -22,10 +22,6 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
 
     SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN;
     app->window = SDL_CreateWindow("Highly Moddable Block Game", 1024, 512, windowFlags);
-    if (!app->window) {
-        SDL_Log("Failed to construct the window: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
     HANDLE_SDL_ERROR(!app->window, "Failed to construct the window", handleAppFailure);
 
     app->gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, app->debug, NULL);
@@ -104,6 +100,7 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
 
     {
         void *transferBufferPtr = SDL_MapGPUTransferBuffer(app->gpu, app->transferBuffer, false);
+        HANDLE_SDL_ERROR(!transferBufferPtr, "Failed to map memory for the transfer buffer", handleAppFailure);
         void *verticesPtr = transferBufferPtr;
         void *indicesPtr = transferBufferPtr + app->testMesh.verticesArraySize;
 
@@ -146,6 +143,7 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
 
     {
         void *textureTransferBufferPtr = SDL_MapGPUTransferBuffer(app->gpu, app->textureTransferBuffer, false);
+        HANDLE_SDL_ERROR(!textureTransferBufferPtr, "Failed to map memory for the texture transfer buffer", handleAppFailure);
         void *testTexturePtr = textureTransferBufferPtr;
 
         SDL_memcpy(testTexturePtr, app->testImage->pixels, testImageSize);
@@ -441,11 +439,15 @@ SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
 }
 
 void application_enableRelativeModeMousing(Application *app) {
-    SDL_SetWindowRelativeMouseMode(app->window, true);
+    HANDLE_SDL_ERROR(!SDL_SetWindowRelativeMouseMode(app->window, true), "Failed to enable the relative mode mousing", returnLabel);
+    returnLabel:
+    return;
 }
 
 void application_disableRelativeModeMousing(Application *app) {
-    SDL_SetWindowRelativeMouseMode(app->window, false);
+    HANDLE_SDL_ERROR(!SDL_SetWindowRelativeMouseMode(app->window, false), "Failed to disable the relative mode mousing", returnLabel);
+    returnLabel:
+    return;
 }
 
 mat4s calculatePerspectiveMatrixFromWindow(SDL_Window *window) {
