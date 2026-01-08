@@ -274,15 +274,15 @@ void application_free(Application *app) {
 
     renderMesh_free(&app->testMesh);
 
-    SDL_free(app->testImage);
-    SDL_ReleaseGPUTexture(app->gpu, app->testTexture);
-    SDL_ReleaseGPUSampler(app->gpu, app->testTextureSampler);
-
     SDL_ReleaseGPUBuffer(app->gpu, app->vertexBuffer);
     SDL_ReleaseGPUBuffer(app->gpu, app->indexBuffer);
     SDL_ReleaseGPUTransferBuffer(app->gpu, app->transferBuffer);
     SDL_ReleaseGPUTransferBuffer(app->gpu, app->textureTransferBuffer);
     SDL_ReleaseGPUGraphicsPipeline(app->gpu, app->graphicsPipeline);
+
+    SDL_free(app->testImage);
+    SDL_ReleaseGPUTexture(app->gpu, app->testTexture);
+    SDL_ReleaseGPUSampler(app->gpu, app->testTextureSampler);
 
     SDL_DestroyGPUDevice(app->gpu);
     SDL_DestroyWindow(app->window);
