@@ -1,4 +1,4 @@
-#include "block.h"
+#include "blockID.h"
 
 
 bool isBlockValid(BlockID block) {
