@@ -1,19 +1,20 @@
 #pragma once
 #include "../common.h"
 #include "worldConstants.h"
-#include "block/block.h"
+#include "block/blockID.h"
 
 #include "../render/mesh.h"
 
 
-
 typedef struct Chunk {
-    BlockID blocks[CHUNK_SIZE_X * CHUNK_SIZE_Y * CHUNK_SIZE_Z];
+    ivec3s chunkPosition;
+
+    BlockID *blocks;
 
 } Chunk;
 
 
-Chunk *chunk_init();
+Chunk chunk_init(ivec3s chunkPosition);
 void chunk_free(Chunk *chunk);
 
 void chunk_setBlock(Chunk *chunk, s32 x, s32 y, s32 z, BlockID block);

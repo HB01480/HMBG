@@ -4,21 +4,16 @@
 s32 chunk_calculateIndex(s32 x, s32 y, s32 z);
 
 
-Chunk *chunk_init() {
-    Chunk *chunk = SDL_malloc(sizeof(Chunk)); 
-    if (!chunk) {
-        SDL_Log("Failed to allocate chunk in chunk initialization");
-        return NULL;
-    }
-
-    SDL_zerop(chunk);
-    SDL_zeroa(chunk->blocks); // This is redundant
+Chunk chunk_init(ivec3s chunkPosition) {
+    Chunk chunk; SDL_zero(chunk);
+    chunk.chunkPosition = chunkPosition;
+    chunk.blocks = SDL_malloc(CHUNK_BYTE_SIZE); // This is redundant
 
     return chunk;
 }
 
 void chunk_free(Chunk *chunk) {
-    SDL_free(chunk);
+    SDL_free(chunk->blocks);
 }
 
 void chunk_setBlock(Chunk *chunk, s32 x, s32 y, s32 z, BlockID block) {
@@ -32,11 +27,12 @@ BlockID chunk_getBlock(Chunk *chunk, s32 x, s32 y, s32 z) {
 }
 
 RenderMesh chunk_generateSolidMesh(Chunk *chunk) {
+    FUNCTION_NOT_IMPLEMENTED
     return (RenderMesh){};
 }
 
 RenderMesh chunk_generateLiquidMesh(Chunk *chunk) {
-    SDL_Log("chunk_generateLiquidMesh is not IMPLEMENTED YET");
+    FUNCTION_NOT_IMPLEMENTED
     return (RenderMesh){};
 }
 
