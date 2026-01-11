@@ -25,7 +25,7 @@ typedef enum BlockID {
 #define BLOCK_ID_COUNT BLOCK_ID_COUNT_PLUS_ONE - 1
 
 
-bool isBlockValid(BlockID block);
-bool isBlockGas(BlockID block);
-bool isBlockLiquid(BlockID block);
-bool isBlockSolid(BlockID block);
+bool isBlockIDValid(BlockID block);
+bool isBlockIDGas(BlockID block);
+bool isBlockIDLiquid(BlockID block);
+bool isBlockIDSolid(BlockID block);
