@@ -7,7 +7,7 @@
 typedef struct World {
     u64 seed;
 
-    Chunk chunkList[];
+    Chunk *chunkList;
 
 } World;
 
