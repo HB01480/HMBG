@@ -15,7 +15,7 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
 
     app->debug = false;
     if (argumentCount > 1) {
-        if (SDL_strcmp(arguments[1], "debug")) {
+        if (SDL_strcmp(arguments[1], "debug") == 0) {
             app->debug = true;
         }
     }
