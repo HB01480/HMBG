@@ -14,6 +14,18 @@ void *SDLext_memdup(const void *source, usize size) {
     return destination;
 }
 
+int SDLext_memcmp(const void *mem1, const void *mem2, usize size) {
+    const u8 *ptr1 = mem1;
+    const u8 *ptr2 = mem2;
+
+    for (usize i = 0; i < size; i++) {
+        u8 difference = ptr1[i] - ptr2[i];
+        if (difference != 0) {
+            return difference;
+        }
+    }
+}
+
 void *SDLext_LoadStorageFile(usize *outBufferSize, SDL_Storage *storage, const char *filepath) {
     void *buffer = NULL;
     usize bufferSize = 0;
