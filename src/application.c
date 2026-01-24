@@ -224,7 +224,7 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
                 .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription []){
                     {
                         .slot = 0,
-                        .instance_step_rate = 1,
+                        .instance_step_rate = 0,
                         .pitch = sizeof(RenderVertex),
                         .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX
                     }
