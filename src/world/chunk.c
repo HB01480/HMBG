@@ -7,7 +7,7 @@ s32 chunk_calculateIndex(s32 x, s32 y, s32 z);
 Chunk chunk_init(ivec3s chunkPosition) {
     Chunk chunk; SDL_zero(chunk);
     chunk.chunkPosition = chunkPosition;
-    chunk.blocks = SDL_malloc(CHUNK_BYTE_SIZE); // This is redundant
+    chunk.blocks = SDL_malloc(CHUNK_BLOCKS_BYTE_SIZE); // This is redundant
     CHECK_ERROR(!chunk.blocks, "Failed to allocate memory for a chunk's block data")
 
     return chunk;

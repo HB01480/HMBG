@@ -10,6 +10,7 @@ typedef struct Chunk {
     ivec3s chunkPosition;
 
     Block *blocks;
+    usize blocksCount;
 
 } Chunk;
 
