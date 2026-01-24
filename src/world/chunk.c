@@ -8,8 +8,7 @@ Chunk chunk_init(ivec3s chunkPosition) {
     Chunk chunk; SDL_zero(chunk);
     chunk.chunkPosition = chunkPosition;
     chunk.blocks = SDL_malloc(CHUNK_BYTE_SIZE); // This is redundant
-    HANDLE_ERROR(!chunk.blocks, "Failed to allocate memory for a chunk's block data", doNothing);
-    doNothing:
+    CHECK_ERROR(!chunk.blocks, "Failed to allocate memory for a chunk's block data")
 
     return chunk;
 }
