@@ -24,6 +24,8 @@ int SDLext_memcmp(const void *mem1, const void *mem2, usize size) {
             return difference;
         }
     }
+
+    return 0;
 }
 
 void *SDLext_LoadStorageFile(usize *outBufferSize, SDL_Storage *storage, const char *filepath) {
