@@ -1,4 +1,5 @@
 #pragma once
+#include <SDL3/SDL.h>
 
 
 #define CONDITIONAL_PRINT(condition, ...) if ((condition)) {\
