@@ -4,43 +4,37 @@
 #include <SDL3/SDL_main.h>
 
 
-typedef struct Program {
-    Application app;
-
-} Program;
-
 SDL_AppResult SDLCALL SDL_AppInit(void **appstate, int argc, char *argv[]) {
-    Program *program = SDL_malloc(sizeof(Program));
-    if (!program) {
-        SDL_Log("Failed to allocate memory for the program:\n%s", SDL_GetError());
+    Application *app = SDL_malloc(sizeof(Application));
+    if (!app) {
+        SDL_Log("Failed to allocate memory for the application struct:\n%s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
-    *appstate = program;
-    return application_init(&program->app, argc, argv);
+    *appstate = app;
+    return application_init(app, argc, argv);
 }
 
 SDL_AppResult SDLCALL SDL_AppIterate(void *appstate) {
-    Program *program = (Program *)appstate;
+    Application *app = (Application *)appstate;
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
-    appResult = application_onUpdate(&program->app);
-    appResult = application_onRender(&program->app);
+    appResult = application_onUpdate(app);
+    appResult = application_onRender(app);
     return appResult;
 }
 
 SDL_AppResult SDLCALL SDL_AppEvent(void *appstate, SDL_Event *event) {
-    Program *program = (Program *)appstate;
+    Application *app = (Application *)appstate;
 
-    return application_onEvent(&program->app, event);
+    return application_onEvent(app, event);
 }
 
 void SDLCALL SDL_AppQuit(void *appstate, SDL_AppResult result) {
-    Program *program = (Program *)appstate;
-    if (!program) {
+    Application *app = (Application *)appstate;
+    if (!app) {
         return;
     }
 
-    application_free(&program->app);
-    SDL_free(program);
+    application_free(app);
 }
