@@ -20,7 +20,10 @@ SDL_AppResult SDLCALL SDL_AppIterate(void *appstate) {
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
     appResult = application_onUpdate(app);
+    if (appResult != SDL_APP_CONTINUE) goto skipAppRendering;
+
     appResult = application_onRender(app);
+    skipAppRendering:
     return appResult;
 }
 
