@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils/bool.h"
+#include "../common/bool.h"
 
 
 typedef const bool *KeyState;

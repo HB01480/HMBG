@@ -4,9 +4,9 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <cglm/struct.h>
 
-#include "utils/typedefs.h"
-#include "utils/bool.h"
-#include "utils/SDLext.h"
-#include "utils/math.h"
-#include "utils/conditional_macros.h"
-#include "utils/helpers.h"
+#include "common/typedefs.h"
+#include "common/bool.h"
+#include "common/SDLext.h"
+#include "common/math.h"
+#include "common/conditional_macros.h"
+#include "common/helpers.h"
