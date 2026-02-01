@@ -2,9 +2,11 @@
 
 
 void *SDLext_memdup(const void *source, usize size) {
-    void *destination = NULL;
+    if (size <= 0) {
+        return NULL;
+    }
 
-    destination = SDL_malloc(size);
+    void *destination = SDL_malloc(size);
     if (!destination) {
         return NULL;
     }
