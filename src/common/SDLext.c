@@ -2,7 +2,7 @@
 
 
 void *SDLext_memdup(const void *source, usize size) {
-    if (size <= 0) {
+    if (size < 1) {
         return NULL;
     }
 
