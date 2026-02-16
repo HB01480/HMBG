@@ -6,11 +6,20 @@ static bool isApplicationConstructed = false;
 SDL_Surface *application_loadImage(const char *filepath, SDL_Storage *storage);
 
 SDL_AppResult application_init(Application *outApp, int argumentCount, char *arguments[]) {
-    HANDLE_CRITICAL(isApplicationConstructed, handleAppFailure, "The application was already successfully constructed")
-    HANDLE_CRITICAL(!outApp, handleAppFailure, "Parameter 'outApp' is NULL")
+    if (isApplicationConstructed) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "The application was already successfully constructed");
+        return SDL_APP_FAILURE;
+    }
+    if (!outApp) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Parameter outApp is NULL");
+        return SDL_APP_FAILURE;
+    }
 
     Application *app = SDL_malloc(sizeof(Application));
-    HANDLE_CRITICAL(!app, handleAppFailure, "Failed to allocate memory for the application")
+    if (!app) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Failed to allocate memory for the application");
+        return SDL_APP_FAILURE;
+    }
     SDL_zerop(app);
 
     app->debug = false;
@@ -22,11 +31,20 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
 
     SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN;
     app->window = SDL_CreateWindow("Highly Moddable Block Game", 1024, 512, windowFlags);
-    HANDLE_SDL_CRITICAL(!app->window, handleAppFailure, "Failed to construct the window");
+    if (!app->window) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Failed to construct the window:\n%s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
 
     app->gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, app->debug, NULL);
-    HANDLE_SDL_CRITICAL(!app->gpu, handleAppFailure, "Failed to construct the gpu device");
-    HANDLE_SDL_CRITICAL(!SDL_ClaimWindowForGPUDevice(app->gpu, app->window), handleAppFailure, "Failed to claim the window for the gpu device");
+    if (!app->gpu) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_GPU, "Failed to construct the gpu device:\n%s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+    if (!SDL_ClaimWindowForGPUDevice(app->gpu, app->window)) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_GPU, "Failed to claim window for the gpu device:\n%s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
 
     app->clock = clock_init();
 
@@ -34,10 +52,13 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
     app->mouseState = mouseState_init();
 
     SDL_Storage *contentStorage = SDL_OpenTitleStorage(NULL, 0);
-    HANDLE_SDL_CRITICAL(!contentStorage, handleAppFailure, "Failed to open content storage")
+    if (!contentStorage) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "Failed to open the content storage:\n%s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
 
     while (!SDL_StorageReady(contentStorage)) {
-        SDL_Log("Waiting for content storage to be ready");
+        SDL_Log("Waiting for the content storage to be ready");
         SDL_Delay(1);
     }
 
@@ -69,26 +90,42 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
         .size = app->testMesh.verticesArraySize,
         .props = 0
     });
-    HANDLE_SDL_CRITICAL(!app->vertexBuffer, handleAppFailure, "Failed to construct the vertex buffer")
+    if (!app->vertexBuffer) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_RENDER, "Failed to construct the vertex buffer:\n%s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
 
     app->indexBuffer = SDL_CreateGPUBuffer(app->gpu, &(SDL_GPUBufferCreateInfo){
         .usage = SDL_GPU_BUFFERUSAGE_INDEX,
         .size = app->testMesh.indicesArraySize,
         .props = 0
     });
-    HANDLE_SDL_CRITICAL(!app->indexBuffer, handleAppFailure, "Failed to construct the index buffer")
+    if (!app->indexBuffer) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_RENDER, "Failed to construct the index buffer:\n%s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
 
     app->transferBuffer = SDL_CreateGPUTransferBuffer(app->gpu, &(SDL_GPUTransferBufferCreateInfo){
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
         .size = app->testMesh.verticesArraySize + app->testMesh.indicesArraySize,
         .props = 0
     });
-    HANDLE_SDL_CRITICAL(!app->transferBuffer, handleAppFailure, "Failed to construct the transfer buffer")
+    if (!app->transferBuffer) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_RENDER, "Failed to construct the transfer buffer:\n%s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
 
-    app->testImage = application_loadImage("res/images/testImage.png", contentStorage);
-    HANDLE_SDL_CRITICAL(!app->testImage, handleAppFailure, "Failed to load the test image from disk")
+    const char *testImagePath = "res/images/testImage.png";
+    app->testImage = application_loadImage(testImagePath, contentStorage);
+    if (!app->testImage) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Failed to load '%s':\n%s", testImagePath, SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
     app->testImage = SDL_ConvertSurface(app->testImage, SDL_PIXELFORMAT_RGBA32);
-    HANDLE_SDL_CRITICAL(!app->testImage, handleAppFailure, "Failed to convert the test image to RGBA32")
+    if (!app->testImage) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Failed to convert the testImage's format to RGBA32:\n%s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
     usize testImageSize = app->testImage->w * app->testImage->h * 4;
 
     app->textureTransferBuffer = SDL_CreateGPUTransferBuffer(app->gpu, &(SDL_GPUTransferBufferCreateInfo){
@@ -96,11 +133,17 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
         .size = testImageSize,
         .props = 0
     });
-    HANDLE_SDL_CRITICAL(!app->textureTransferBuffer, handleAppFailure, "Failed to construct the texture transfer buffer")
+    if (!app->textureTransferBuffer) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_RENDER, "Failed to construct the texture transfer buffer:\n%s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
 
     {
         void *transferBufferPtr = SDL_MapGPUTransferBuffer(app->gpu, app->transferBuffer, false);
-        HANDLE_SDL_CRITICAL(!transferBufferPtr, handleAppFailure, "Failed to map memory for the transfer buffer")
+        if (!transferBufferPtr) {
+            SDL_LogCritical(SDL_LOG_CATEGORY_RENDER, "Failed to map memory for the transfer buffer:\n%s", SDL_GetError());
+            return SDL_APP_FAILURE;
+        }
         void *verticesPtr = transferBufferPtr;
         void *indicesPtr = transferBufferPtr + app->testMesh.verticesArraySize;
 
@@ -121,7 +164,10 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
         .sample_count = 0,
         .props = 0,
     });
-    HANDLE_SDL_CRITICAL(!app->testTexture, handleAppFailure, "Failed to construct the test texture")
+    if (!app->testTexture) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_RENDER, "Failed to construct the test texture:\n%s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
 
     app->testTextureSampler = SDL_CreateGPUSampler(app->gpu, &(SDL_GPUSamplerCreateInfo){
         .address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
@@ -139,11 +185,17 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
         .mip_lod_bias = 0.0f,
         .props = 0
     });
-    HANDLE_SDL_CRITICAL(!app->testTextureSampler, handleAppFailure, "Failed to construct the test texture sampler")
+    if (!app->testTextureSampler) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_RENDER, "Failed to construct the test texture sampler:\n%s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
 
     {
         void *textureTransferBufferPtr = SDL_MapGPUTransferBuffer(app->gpu, app->textureTransferBuffer, false);
-        HANDLE_SDL_CRITICAL(!textureTransferBufferPtr, handleAppFailure, "Failed to map memory for the texture transfer buffer");
+        if (!textureTransferBufferPtr) {
+            SDL_LogCritical(SDL_LOG_CATEGORY_RENDER, "Failed to map memory for the texture transfer buffer:\n%s", SDL_GetError());
+            return SDL_APP_FAILURE;
+        }
         void *testTexturePtr = textureTransferBufferPtr;
 
         SDL_memcpy(testTexturePtr, app->testImage->pixels, testImageSize);
@@ -159,10 +211,15 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
         void *fragmentShaderCode = NULL;
 
         vertexShaderCode = SDLext_LoadStorageFile(&vertexShaderCodeSize, contentStorage, vertexShaderPath);
-        HANDLE_SDL_CRITICAL(!vertexShaderCode, handleAppFailure, "Failed to load vertex shader code from content storage")
-
+        if (!vertexShaderCode) {
+            SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "Failed to load the vertex shader code:\n%s", SDL_GetError());
+            return SDL_APP_FAILURE;
+        }
         fragmentShaderCode = SDLext_LoadStorageFile(&fragmentShaderCodeSize, contentStorage, fragmentShaderPath);
-        HANDLE_SDL_CRITICAL(!fragmentShaderCode, handleAppFailure, "Failed to load fragment shader code from content storage")
+        if (!fragmentShaderCode) {
+            SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "Failed to load the fragment shader code:\n%s", SDL_GetError());
+            return SDL_APP_FAILURE;
+        }
 
         SDL_GPUShader *vertexShader = SDL_CreateGPUShader(app->gpu, &(SDL_GPUShaderCreateInfo){
             .code = vertexShaderCode,
@@ -176,7 +233,10 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
             .num_uniform_buffers = 1,
             .props = 0
         });
-        HANDLE_SDL_CRITICAL(!vertexShader, handleAppFailure, "Failed to construct a vertex shader")
+        if (!vertexShader) {
+            SDL_LogCritical(SDL_LOG_CATEGORY_RENDER, "Failed to construct the vertex shader:\n%s", SDL_GetError());
+            return SDL_APP_FAILURE;
+        }
 
         SDL_GPUShader *fragmentShader = SDL_CreateGPUShader(app->gpu, &(SDL_GPUShaderCreateInfo){
             .code = fragmentShaderCode,
@@ -190,7 +250,10 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
             .num_uniform_buffers = 0,
             .props = 0
         });
-        HANDLE_SDL_CRITICAL(!fragmentShader, handleAppFailure, "Failed to construct a fragment shader")
+        if (!fragmentShader) {
+            SDL_LogCritical(SDL_LOG_CATEGORY_RENDER, "Failed to construct the fragment shader:\n%s", SDL_GetError());
+            return SDL_APP_FAILURE;
+        }
 
         SDL_free(vertexShaderCode);
         SDL_free(fragmentShaderCode);
@@ -252,7 +315,10 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
 
             .props = 0
         });
-        HANDLE_SDL_CRITICAL(!app->graphicsPipeline, handleAppFailure, "Failed to construct the graphics pipeline")
+        if (!app->graphicsPipeline) {
+            SDL_LogCritical(SDL_LOG_CATEGORY_RENDER, "Failed to construct the graphics pipeline:\n%s", SDL_GetError());
+            return SDL_APP_FAILURE;
+        }
 
         SDL_ReleaseGPUShader(app->gpu, vertexShader);
         SDL_ReleaseGPUShader(app->gpu, fragmentShader);
@@ -264,9 +330,6 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
     *outApp = *app;
     isApplicationConstructed = true;
     return SDL_APP_CONTINUE;
-
-    handleAppFailure:
-    return SDL_APP_FAILURE;
 }
 
 void application_free(Application *app) {
@@ -439,11 +502,17 @@ SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
 }
 
 void application_enableRelativeModeMousing(Application *app) {
-    CHECK_SDL_ERROR(!SDL_SetWindowRelativeMouseMode(app->window, true), "Failed to enable the relative mode mousing");
+    if (!SDL_SetWindowRelativeMouseMode(app->window, true)) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to enable the relative mode mousing:\n%s", SDL_GetError());
+        return;
+    }
 }
 
 void application_disableRelativeModeMousing(Application *app) {
-    CHECK_SDL_ERROR(!SDL_SetWindowRelativeMouseMode(app->window, false), "Failed to disable the relative mode mousing");
+    if (!SDL_SetWindowRelativeMouseMode(app->window, false)) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to disable the relative mode mousing:\n%s", SDL_GetError());
+        return;
+    }
 }
 
 mat4s calculatePerspectiveMatrixFromWindow(SDL_Window *window) {
@@ -456,15 +525,25 @@ mat4s calculatePerspectiveMatrixFromWindow(SDL_Window *window) {
 SDL_Surface *application_loadImage(const char *filepath, SDL_Storage *storage) {
     usize imageBufferSize = 0;
     void *imageBuffer = SDLext_LoadStorageFile(&imageBufferSize, storage, filepath);
-    HANDLE_SDL_CRITICAL(!imageBuffer, handleFailure, "Failed to load the image from the provided storage")
+    if (!imageBuffer) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Failed to load image buffer:\n%s", SDL_GetError());
+        return NULL;
+    }
 
     SDL_IOStream *imageIO = SDL_IOFromMem(imageBuffer, imageBufferSize);
-    HANDLE_SDL_CRITICAL(!imageIO, handleFailure, "Failed to prepare the io stream around the image buffer")
+    if (!imageIO) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Failed to construct the image io around the image buffer:\n%s", SDL_GetError());
+        SDL_free(imageBuffer);
+        return NULL;
+    }
 
     SDL_Surface *image = IMG_Load_IO(imageIO, false);
-    HANDLE_SDL_CRITICAL(!image, handleFailure, "Failed to load the image from the image IO")
-    return image;
+    if (!image) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Failed to load the image from the image io:\n%s", SDL_GetError());
+        SDL_CloseIO(imageIO);
+        SDL_free(imageBuffer);
+        return NULL;
+    }
 
-    handleFailure:
-    return NULL;
+    return image;
 }

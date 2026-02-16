@@ -8,5 +8,4 @@
 #include "common/bool.h"
 #include "common/SDLext.h"
 #include "common/math.h"
-#include "common/conditional_macros.h"
 #include "common/helpers.h"
