@@ -4,6 +4,8 @@
 #include "typedefs.h"
 
 
+#define SDLext_SetErrorVerbose(errorMessageString) SDL_SetError("(%s:%i) %s", __func__, __LINE__, errorMessageString)
+
 void *SDLext_memdup(const void *source, usize size);
 
 int SDLext_memcmp(const void *mem1, const void *mem2, usize size);
