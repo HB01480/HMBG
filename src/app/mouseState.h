@@ -12,5 +12,5 @@ typedef struct MouseState {
 } MouseState;
 
 
-MouseState mouseState_init();
-void mouseState_update(MouseState *state);
+MouseState MouseState_init();
+void MouseState_update(MouseState *state);

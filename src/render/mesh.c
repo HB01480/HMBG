@@ -1,7 +1,7 @@
 #include "mesh.h"
 
 
-RenderMesh renderMesh_init(const RenderVertex *vertices, usize verticesArraySize, const u32 *indices, usize indicesArraySize) {
+RenderMesh RenderMesh_init(const RenderVertex *vertices, usize verticesArraySize, const u32 *indices, usize indicesArraySize) {
     RenderMesh mesh; SDL_zero(mesh);
     mesh.verticesArraySize = verticesArraySize;
     mesh.indicesArraySize = indicesArraySize;
@@ -11,7 +11,7 @@ RenderMesh renderMesh_init(const RenderVertex *vertices, usize verticesArraySize
     return mesh;
 }
 
-void renderMesh_free(RenderMesh *mesh) {
+void RenderMesh_free(RenderMesh *mesh) {
     SDL_free(mesh->vertices);
     SDL_free(mesh->indices);
 

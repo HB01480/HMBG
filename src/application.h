@@ -32,19 +32,18 @@ typedef struct Application {
     SDL_GPUBuffer *indexBuffer;
     SDL_GPUTransferBuffer *transferBuffer;
     SDL_GPUTransferBuffer *textureTransferBuffer;
-    
 
 } Application;
 
 
-SDL_AppResult application_init(Application *outApp, int argumentCount, char *arguments[]);
-void application_free(Application *app);
+SDL_AppResult Application_init(Application *outApp, int argumentCount, char *arguments[]);
+void Application_free(Application *app);
 
-SDL_AppResult application_onUpdate(Application *app);
-SDL_AppResult application_onRender(Application *app);
-SDL_AppResult application_onEvent(Application *app, SDL_Event *event);
+SDL_AppResult Application_onUpdate(Application *app);
+SDL_AppResult Application_onRender(Application *app);
+SDL_AppResult Application_onEvent(Application *app, SDL_Event *event);
 
-void application_enableRelativeModeMousing(Application *app);
-void application_disableRelativeModeMousing(Application *app);
+void Application_enableRelativeModeMousing(Application *app);
+void Application_disableRelativeModeMousing(Application *app);
 
 mat4s calculatePerspectiveMatrixFromWindow(SDL_Window *window);

@@ -9,5 +9,5 @@ typedef struct Clock {
 } Clock;
 
 
-Clock clock_init();
-void clock_tick(Clock *clock);
+Clock Clock_init();
+void Clock_tick(Clock *clock);

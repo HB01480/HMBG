@@ -12,17 +12,17 @@ SDL_AppResult SDLCALL SDL_AppInit(void **appstate, int argc, char *argv[]) {
     }
 
     *appstate = app;
-    return application_init(app, argc, argv);
+    return Application_init(app, argc, argv);
 }
 
 SDL_AppResult SDLCALL SDL_AppIterate(void *appstate) {
     Application *app = (Application *)appstate;
     SDL_AppResult appResult = SDL_APP_CONTINUE;
 
-    appResult = application_onUpdate(app);
+    appResult = Application_onUpdate(app);
     if (appResult != SDL_APP_CONTINUE) goto skipAppRendering;
 
-    appResult = application_onRender(app);
+    appResult = Application_onRender(app);
     skipAppRendering:
     return appResult;
 }
@@ -30,7 +30,7 @@ SDL_AppResult SDLCALL SDL_AppIterate(void *appstate) {
 SDL_AppResult SDLCALL SDL_AppEvent(void *appstate, SDL_Event *event) {
     Application *app = (Application *)appstate;
 
-    return application_onEvent(app, event);
+    return Application_onEvent(app, event);
 }
 
 void SDLCALL SDL_AppQuit(void *appstate, SDL_AppResult result) {
@@ -39,5 +39,5 @@ void SDLCALL SDL_AppQuit(void *appstate, SDL_AppResult result) {
         return;
     }
 
-    application_free(app);
+    Application_free(app);
 }

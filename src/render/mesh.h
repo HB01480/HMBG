@@ -12,5 +12,5 @@ typedef struct RenderMesh {
 } RenderMesh;
 
 
-RenderMesh renderMesh_init(const RenderVertex *vertices, usize verticesArraySize, const u32 *indices, usize indicesArraySize);
-void renderMesh_free(RenderMesh *mesh);
+RenderMesh RenderMesh_init(const RenderVertex *vertices, usize verticesArraySize, const u32 *indices, usize indicesArraySize);
+void RenderMesh_free(RenderMesh *mesh);

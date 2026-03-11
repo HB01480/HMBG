@@ -3,9 +3,9 @@
 
 static bool isApplicationConstructed = false;
 
-SDL_Surface *application_loadImage(const char *filepath, SDL_Storage *storage);
+SDL_Surface *Application_loadImage(const char *filepath, SDL_Storage *storage);
 
-SDL_AppResult application_init(Application *outApp, int argumentCount, char *arguments[]) {
+SDL_AppResult Application_init(Application *outApp, int argumentCount, char *arguments[]) {
     if (isApplicationConstructed) {
         SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "The application was already successfully constructed");
         return SDL_APP_FAILURE;
@@ -46,10 +46,10 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
         return SDL_APP_FAILURE;
     }
 
-    app->clock = clock_init();
+    app->clock = Clock_init();
 
     app->keyState = SDL_GetKeyboardState(NULL);
-    app->mouseState = mouseState_init();
+    app->mouseState = MouseState_init();
 
     SDL_Storage *contentStorage = SDL_OpenTitleStorage(NULL, 0);
     if (!contentStorage) {
@@ -74,11 +74,11 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
             0, 2, 3
         };
 
-        app->testMesh = renderMesh_init(vertices, sizeof(vertices), indices, sizeof(indices));
+        app->testMesh = RenderMesh_init(vertices, sizeof(vertices), indices, sizeof(indices));
     }
 
     app->testMesh_modelMatrix = glms_translate_make(glms_vec3_make((f32 []){ 0.0f,  0.0f,  1.0f}));
-    app->renderCamera = renderCamera_init(
+    app->renderCamera = RenderCamera_init(
         glms_vec3_make((f32 []){ 0.0f,  0.0f,  0.0f}),
         glms_vec3_make((f32 []){ 0.0f,  1.0f,  0.0f}),
         0.0f, 0.0f,
@@ -116,7 +116,7 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
     }
 
     const char *testImagePath = "res/images/testImage.png";
-    app->testImage = application_loadImage(testImagePath, contentStorage);
+    app->testImage = Application_loadImage(testImagePath, contentStorage);
     if (!app->testImage) {
         SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Failed to load '%s':\n%s", testImagePath, SDL_GetError());
         return SDL_APP_FAILURE;
@@ -324,7 +324,7 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
         SDL_ReleaseGPUShader(app->gpu, fragmentShader);
     }
 
-    application_enableRelativeModeMousing(app);
+    Application_enableRelativeModeMousing(app);
 
     SDL_ShowWindow(app->window);
     *outApp = *app;
@@ -332,10 +332,10 @@ SDL_AppResult application_init(Application *outApp, int argumentCount, char *arg
     return SDL_APP_CONTINUE;
 }
 
-void application_free(Application *app) {
-    application_disableRelativeModeMousing(app);
+void Application_free(Application *app) {
+    Application_disableRelativeModeMousing(app);
 
-    renderMesh_free(&app->testMesh);
+    RenderMesh_free(&app->testMesh);
 
     SDL_ReleaseGPUBuffer(app->gpu, app->vertexBuffer);
     SDL_ReleaseGPUBuffer(app->gpu, app->indexBuffer);
@@ -354,18 +354,18 @@ void application_free(Application *app) {
     isApplicationConstructed = false;
 }
 
-SDL_AppResult application_onUpdate(Application *app) {
-    if (app->keyState[SDL_SCANCODE_W]) renderCamera_moveForward(&app->renderCamera, app->clock.dt);
-    if (app->keyState[SDL_SCANCODE_S]) renderCamera_moveBackward(&app->renderCamera, app->clock.dt);
-    if (app->keyState[SDL_SCANCODE_A]) renderCamera_moveLeftward(&app->renderCamera, app->clock.dt);
-    if (app->keyState[SDL_SCANCODE_D]) renderCamera_moveRightward(&app->renderCamera, app->clock.dt);
+SDL_AppResult Application_onUpdate(Application *app) {
+    if (app->keyState[SDL_SCANCODE_W]) RenderCamera_moveForward(&app->renderCamera, app->clock.dt);
+    if (app->keyState[SDL_SCANCODE_S]) RenderCamera_moveBackward(&app->renderCamera, app->clock.dt);
+    if (app->keyState[SDL_SCANCODE_A]) RenderCamera_moveLeftward(&app->renderCamera, app->clock.dt);
+    if (app->keyState[SDL_SCANCODE_D]) RenderCamera_moveRightward(&app->renderCamera, app->clock.dt);
 
-    mouseState_update(&app->mouseState);
-    clock_tick(&app->clock);
+    MouseState_update(&app->mouseState);
+    Clock_tick(&app->clock);
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult application_onRender(Application *app) {
+SDL_AppResult Application_onRender(Application *app) {
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(app->gpu);
 
     SDL_GPUTexture *windowTexture = NULL;
@@ -454,7 +454,7 @@ SDL_AppResult application_onRender(Application *app) {
 
     BasicUBO ubo; SDL_zero(ubo);
     ubo.model = app->testMesh_modelMatrix;
-    ubo.view = renderCamera_calculateViewMatrix(&app->renderCamera);
+    ubo.view = RenderCamera_calculateViewMatrix(&app->renderCamera);
     ubo.projection = calculatePerspectiveMatrixFromWindow(app->window);
     ubo.timeSeconds = SDL_GetTicks() / 1000.0f;
 
@@ -479,7 +479,7 @@ SDL_AppResult application_onRender(Application *app) {
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
+SDL_AppResult Application_onEvent(Application *app, SDL_Event *event) {
     if (event->type == SDL_EVENT_QUIT) {
         return SDL_APP_SUCCESS;
     }
@@ -495,20 +495,20 @@ SDL_AppResult application_onEvent(Application *app, SDL_Event *event) {
         delta.x = event->motion.xrel;
         delta.y = event->motion.yrel;
 
-        renderCamera_pan(&app->renderCamera, delta, app->clock.dt);
+        RenderCamera_pan(&app->renderCamera, delta, app->clock.dt);
     }
 
     return SDL_APP_CONTINUE;
 }
 
-void application_enableRelativeModeMousing(Application *app) {
+void Application_enableRelativeModeMousing(Application *app) {
     if (!SDL_SetWindowRelativeMouseMode(app->window, true)) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to enable the relative mode mousing:\n%s", SDL_GetError());
         return;
     }
 }
 
-void application_disableRelativeModeMousing(Application *app) {
+void Application_disableRelativeModeMousing(Application *app) {
     if (!SDL_SetWindowRelativeMouseMode(app->window, false)) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to disable the relative mode mousing:\n%s", SDL_GetError());
         return;
@@ -522,7 +522,7 @@ mat4s calculatePerspectiveMatrixFromWindow(SDL_Window *window) {
     return glms_perspective(45.0f * DEGREES_TO_RADIANS, aspectRatio, 0.1f, 100.0f);
 }
 
-SDL_Surface *application_loadImage(const char *filepath, SDL_Storage *storage) {
+SDL_Surface *Application_loadImage(const char *filepath, SDL_Storage *storage) {
     usize imageBufferSize = 0;
     void *imageBuffer = SDLext_LoadStorageFile(&imageBufferSize, storage, filepath);
     if (!imageBuffer) {
