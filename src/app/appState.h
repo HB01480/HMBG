@@ -7,10 +7,8 @@ typedef enum AppStateID {
     AS_TITLE_MENU,
     AS_GAME,
 
-    AS_COUNT_PLUS_ONE
+    AS_COUNT
 } AppStateID;
-
-#define AS_COUNT AS_COUNT_PLUS_ONE - 1
 
 
 const static char *appStateNames[] = {
