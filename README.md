@@ -1,3 +1,7 @@
+# Reason for archiving
+The project's scope was WAY TOO BIG, and C was a bit too bare bones.
+C doesn't have templates or type checked compile time metaprogramming.
+
 # HMBG
 HMBG stands for Highly moddable Block Game. It's a block game designed to be highly moddable.
 
